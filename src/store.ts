@@ -1,6 +1,6 @@
 import create from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import { round } from 'lodash'
+import { round, unescape } from 'lodash'
 import { nanoid } from "nanoid"
 import produce from 'immer'
 
@@ -13,13 +13,13 @@ export interface ThrottleLevel {
   secondsSpent: Seconds
 }
 
-// TODO move battery to own spot in store
+
 export interface Battery {
   cells: number,
   volts: number,
-  c: number,
-  label: string,
-  url: string | undefined
+  c?: number,
+  label?: string,
+  url?: string
 }
 
 
@@ -28,30 +28,30 @@ export interface Motor {
   motorWatts: number
   motorRPM: number
   motorAmps: number
-  motorPoles?:number,
-  motorResistance?:number
+  motorPoles?: number,
+  motorResistance?: number
 }
 
 // TODO
 export interface DriveSystem extends Motor {
-  primaryReduction:number
-  secondaryReduction:number
-  wheelOD:number,
-  speed:number,
+  primaryReduction: number
+  secondaryReduction: number
+  wheelOD: number,
+  speed: number,
   motorCount: number
-  batteryId:string,
+  batteryId: string,
 }
 
 // TODO
 export interface WeaponSystem extends Motor {
   motorCount: number,
-  batteryId:string,
-  gearReduction:number,
-  weaponMOI:number,
-  weaponOD:number,
+  batteryId?: string,
+  gearReduction: number,
+  weaponMOI?: number,
+  weaponOD?: number,
 }
 
-  /** @deprecated */
+
 // export interface MotorSystem extends Motor {
 //   batCells: number
 //   batVolts: number
@@ -59,68 +59,94 @@ export interface WeaponSystem extends Motor {
 // }
 
 export interface Bot {
-  id: string,
+  id: BotId,
   name: string,
-  drive: DriveSystem,
-  weapon: WeaponSystem,
-  throttleLevels: Record<SystemName, ThrottleLevel[]>
+  primaryBattery: Battery,
+  secondaryBattery: Battery,
+  batterySystem: {
+    primary: Battery,
+    secondary: Battery | undefined,
+  }
+  // driveSystem: DriveSystem,
+  // weaponSystem: WeaponSystem,
+  // throttleLevels: Record<SystemName, ThrottleLevel[]>
 }
 
 export type SystemName = 'drive' | 'weapon'
+export type BotId = string;
 
-
+const blankBattery: Battery = {
+  cells: 3,
+  volts: 3 * VOLTS_PER_CELL
+}
 const blankBot: Omit<Bot, 'id' | 'name'> = {
-  drive: {
-    batCells: 1,
-    batVolts: VOLTS_PER_CELL,
-    motorCount: 0,
-    motorKv: 0,
-    motorWatts: 0,
-    motorRPM: 0,
-    motorAmps: 0,
-  },
-  weapon: {
-    batCells: 1,
-    batVolts: VOLTS_PER_CELL,
-    motorCount: 0,
-    motorKv: 0,
-    motorWatts: 0,
-    motorRPM: 0,
-    motorAmps: 0,
-  },
+  // drive: {
+  //   batCells: 1,
+  //   batVolts: VOLTS_PER_CELL,
+  //   motorCount: 0,
+  //   motorKv: 0,
+  //   motorWatts: 0,
+  //   motorRPM: 0,
+  //   motorAmps: 0,
+  // },
+  // weapon: {
+  //   batCells: 1,
+  //   batVolts: VOLTS_PER_CELL,
+  //   motorCount: 0,
+  //   motorKv: 0,
+  //   motorWatts: 0,
+  //   motorRPM: 0,
+  //   motorAmps: 0,
+  // },
 
-  throttleLevels: {
-    drive: [{
-      label: "Full Speed",
-      percentage: 1,
-      secondsSpent: 20
-    },
-    {
-      label: "Steady State",
-      percentage: .5,
-      secondsSpent: 120
-    }],
-    weapon: [{
-      label: "Full Speed",
-      percentage: 1,
-      secondsSpent: 20
-    },
-    {
-      label: "Steady State",
-      percentage: .5,
-      secondsSpent: 120
-    }],
-
+  batterySystem: {
+    primary: blankBattery,
+    secondary: undefined
   }
+  // weapon: {
+  //   batteryId: undefined,
+  //   gearReduction: 1,
+  //   motorKv: 0,
+  //   motorWatts: 0,
+  //   motorRPM: 0,
+  //   motorAmps: 0,
+  //   motorCount: 1,
+
+  // },
+  // throttleLevels: {
+  //   drive: [{
+  //     label: "Full Speed",
+  //     percentage: 1,
+  //     secondsSpent: 20
+  //   },
+  //   {
+  //     label: "Steady State",
+  //     percentage: .5,
+  //     secondsSpent: 120
+  //   }],
+  //   weapon: [{
+  //     label: "Full Speed",
+  //     percentage: 1,
+  //     secondsSpent: 20
+  //   },
+  //   {
+  //     label: "Steady State",
+  //     percentage: .5,
+  //     secondsSpent: 120
+  //   }],
+
+  // }
 }
 
 
-interface BearState {
-
-  activeBotId: string | undefined
-  bots: Record<string, Bot>
+export interface BearState {
+  activeBotId: BotId | undefined
+  bots: Record<BotId, Bot>
   createBot: (name: string) => string
   deleteBot: (id: string) => void
+  batteryAdd: (id: BotId) => void
+  batteryRemote: () => void
+  batteryUpdate: (id: BotId, system: keyof Bot['batterySystem'], key: keyof Battery, value: any) => void
   updateMotorSystem: (id: string, system: MotorSystemName, key: keyof MotorSystem, value: number) => void
   updateThrottleLevels: (id: string, system: MotorSystemName, index: number, key: keyof ThrottleLevel, value: any) => void
 }
@@ -151,7 +177,9 @@ export const useStore = create<BearState>()(
             delete newBots[id]
             set({ bots: newBots })
           },
+          batteryUpdate: (id, system, key, value) => {
 
+          },
           updateMotorSystem: (id, system, key, value) => {
             set(
               produce((state: BearState) => {
