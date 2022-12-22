@@ -22,7 +22,7 @@ export default function BatteryCell({botId}: Props): ReactElement {
           />
           <LabeledReadOnlyInput
             title="Volts"
-            value={bot.aBatteryCells}
+            value={bot.$aBatteryVolts}
             roundPlaces={2}
             units="volts"
           />
