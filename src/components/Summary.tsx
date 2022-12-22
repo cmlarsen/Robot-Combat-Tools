@@ -12,7 +12,7 @@ export const Summary: React.FC<{ botId: BotId }> = ({botId}) => {
         <LabeledReadOnlyInput title="Weapon Energy" value={bot.$weaponEnergy} roundPlaces={0} units="Joules" />
         <LabeledReadOnlyInput title="Tip Speed" value={bot.$weaponTipSpeed} roundPlaces={0} units="m/s" />
         <LabeledReadOnlyInput title="Drive Speed" value={bot.$driveTopSpeed} roundPlaces={2} units="m/s" />
-        <LabeledReadOnlyInput title="Current Draw" value={bot.$aBatteryEstimatedAmpHours} roundPlaces={0} units="mAh" />
+        <LabeledReadOnlyInput title="Current Draw" value={bot.$aBatteryEstimatedAmpHours * 1000} roundPlaces={0} units="mAh" />
       </section>
     </div>
   );
