@@ -1,9 +1,10 @@
 import React from 'react';
+import { BotId } from '../botStore';
 import { useComputedBot } from './Bot';
 import { LabeledReadOnlyInput } from './Inputs';
 
-export const Summary: React.FC = () => {
-  const bot = useComputedBot();
+export const Summary: React.FC<{ botId: BotId }> = ({botId}) => {
+  const bot = useComputedBot(botId);
   return (
     <div>
       <h3>Summary</h3>

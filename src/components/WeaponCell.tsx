@@ -9,23 +9,13 @@ import {
   LabeledReadOnlyInput,
 } from './Inputs';
 
-interface Props {}
+interface Props {
+  botId:BotId
+}
 
-export const DataCell: React.FC<{ value: string | number; label: string }> = ({
-  value,
-  label,
-}) => {
-  return (
-    <div className={'dataCell'}>
-      <div className="value">{value}</div>
-      <div className="label">{label}</div>
-    </div>
-  );
-};
 
-export default function WeaponCell(): ReactElement {
+export default function WeaponCell({botId}:Props): ReactElement {
   const {
-    id: botId,
     weaponGearDriven,
     weaponGearDriver,
     weaponOd,
@@ -43,7 +33,7 @@ export default function WeaponCell(): ReactElement {
     $weaponFullSendAmpHours,
     $weaponTypicalAmpHours,
     $weaponGearRatio,
-  } = useComputedBot();
+  } = useComputedBot(botId);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,

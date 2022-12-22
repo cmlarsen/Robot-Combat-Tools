@@ -1,11 +1,14 @@
 import React, { ReactElement } from 'react';
+import { BotId } from '../botStore';
 import { useComputedBot } from './Bot';
 import { LabeledNumberInput, LabeledReadOnlyInput } from './Inputs';
 
-interface Props {}
+interface Props {
+  botId:BotId
+}
 
-export default function BatteryCell({}: Props): ReactElement {
-  const bot = useComputedBot();
+export default function BatteryCell({botId}: Props): ReactElement {
+  const bot = useComputedBot(botId);
   return (
     <div>
       <h3>Battery</h3>

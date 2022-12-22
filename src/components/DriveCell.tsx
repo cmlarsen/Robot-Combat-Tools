@@ -1,17 +1,19 @@
 import { round } from 'lodash';
 import React, { ReactElement } from 'react';
-import { Bot, getBotStore, updateBot } from '../botStore';
+import { Bot, BotId, getBotStore, updateBot } from '../botStore';
 import { useComputedBot } from './Bot';
 import {
   LabeledNumberInput,
   LabeledRangeInput,
   LabeledReadOnlyInput,
 } from './Inputs';
-import { DataCell } from './WeaponCell';
 
-export default function DriveCell(): ReactElement {
+interface Props {
+  botId:BotId
+}
+export default function DriveCell({botId}:Props): ReactElement {
   const {
-    id: botId,
+
     driveMotorCount,
     driveMotorKv,
     driveMotorAmps,
@@ -26,7 +28,7 @@ export default function DriveCell(): ReactElement {
     driveTypicalThrottle,
     $driveFullSendAmpHours,
     $driveTypicalAmpHours,
-  } = useComputedBot();
+  } = useComputedBot(botId);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
