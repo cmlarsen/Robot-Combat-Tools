@@ -142,7 +142,7 @@ export default function WeaponCell({botId}:Props): ReactElement {
                 title={`Throttle (${round(weaponFullSendThrottle * 100)}%)`}
                 min={0}
                 max={1}
-                step={0.5}
+                step={0.05}
                 value={weaponFullSendThrottle}
                 valueKey={'weaponFullSendThrottle'}
               />
