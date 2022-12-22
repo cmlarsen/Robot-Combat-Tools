@@ -10,11 +10,10 @@ import {
 } from './Inputs';
 
 interface Props {
-  botId:BotId
+  botId: BotId;
 }
 
-
-export default function WeaponCell({botId}:Props): ReactElement {
+export default function WeaponCell({ botId }: Props): ReactElement {
   const {
     weaponGearDriven,
     weaponGearDriver,
@@ -34,27 +33,21 @@ export default function WeaponCell({botId}:Props): ReactElement {
     $weaponTypicalAmpHours,
     $weaponGearRatio,
   } = useComputedBot(botId);
+  const updateWatts = () => {
+    const bot = getBotStore().getComputedBot(botId);
+    const watts = bot.weaponMotorAmps * bot.$aBatteryVolts;
+    console.log("watts", watts)
+    updateBot({ weaponMotorWatts: watts });
+  };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    key: keyof Bot
-  ) => {
-    updateBot({ [key]: parseFloat(e.target.value) });
-  };
-  const updateAmps = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const updateAmps = () => {
     const bot = getBotStore().getComputedBot(botId);
-    const amps = parseInt(e.target.value);
-    const watts = amps * bot.$aBatteryVolts;
-    console.log({ watts, amps });
-    updateBot({ weaponMotorWatts: watts, weaponMotorAmps: amps });
+    const amps = bot.weaponMotorWatts / bot.$aBatteryVolts;
+    console.log("amps", amps)
+    updateBot({ weaponMotorAmps: amps });
   };
-  const updateWatts = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const bot = getBotStore().getComputedBot(botId);
-    const watts = parseInt(e.target.value);
-    const amps = watts / bot.$aBatteryVolts;
-    console.log({ watts, amps });
-    updateBot({ weaponMotorWatts: watts, weaponMotorAmps: amps });
-  };
+
+
   return (
     <div>
       <h3>Weapon</h3>
@@ -86,6 +79,7 @@ export default function WeaponCell({botId}:Props): ReactElement {
             value={weaponMotorAmps}
             valueKey="weaponMotorAmps"
             roundPlaces={0}
+            onBlur={updateWatts}
             units={'amps'}
           />
           <LabeledNumberInput
@@ -93,6 +87,7 @@ export default function WeaponCell({botId}:Props): ReactElement {
             value={weaponMotorWatts}
             valueKey="weaponMotorWatts"
             roundPlaces={0}
+            onBlur={updateAmps}
             units={'watts'}
           />
           <h6>Gearing</h6>
@@ -100,12 +95,14 @@ export default function WeaponCell({botId}:Props): ReactElement {
             title={'Driver Gear'}
             value={weaponGearDriver}
             valueKey="weaponGearDriver"
+            units="teeth"
             roundPlaces={0}
           />
           <LabeledNumberInput
             title={'Driven Gear'}
             value={weaponGearDriven}
             valueKey="weaponGearDriven"
+            units="teeth"
             roundPlaces={0}
           />
           <LabeledReadOnlyInput
