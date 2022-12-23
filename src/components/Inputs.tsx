@@ -26,14 +26,15 @@ export const LabeledNumberInput: React.FC<{
   valueKey: keyof Bot;
   units?: string;
   roundPlaces?: number;
+  tooltip?: string;
   onBlur?: (v: number) => void;
-}> = ({ title, value, valueKey, units, roundPlaces, onBlur }) => {
+}> = ({ title, value, valueKey, units, roundPlaces, onBlur,tooltip }) => {
   const handleNumberChange = (v: number, key: keyof Bot) => {
     updateBot({ [key]: v });
   };
   return (
-    <div className="inputCell">
-      <span className="label">{title}</span>
+    <div className="inputCell" title={tooltip}>
+      <span className="label">{title}{tooltip && `(?)`}</span>
       <div>
       <ControlledNumberInput
         initialValue={round(value, roundPlaces ?? Infinity)}
@@ -50,12 +51,12 @@ export const LabeledReadOnlyInput: React.FC<{
   title: string;
   value: number;
   roundPlaces?: number;
-  units?: string;
-}> = ({ title, value, units, roundPlaces }) => {
+  units?: string;tooltip?: string;
+}> = ({ title, value, units, roundPlaces, tooltip }) => {
   return (
-    <div className="inputCell readOnly">
+    <div className="inputCell readOnly" title={tooltip}>
 
-      <span className="label">{title}</span>
+      <span className="label">{title}{tooltip && `(?)`}</span>
       <div>
       <input
         type="text"

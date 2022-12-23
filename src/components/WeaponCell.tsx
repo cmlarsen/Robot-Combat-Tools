@@ -16,25 +16,7 @@ interface Props {
 }
 
 export default function WeaponCell({ botId }: Props): ReactElement {
-  const {
-    weaponGearDriven,
-    weaponGearDriver,
-    weaponOd,
-    weaponMoi,
-    $weaponEnergy,
-    $weaponRpm,
-    $weaponTipSpeed,
-    weaponMotorKv,
-    weaponMotorAmps,
-    weaponMotorWatts,
-    weaponFullSendThrottle,
-    weaponFullSendDuration,
-    weaponTypicalThrottle,
-    weaponTypicalDuration,
-    $weaponFullSendAmpHours,
-    $weaponTypicalAmpHours,
-    $weaponGearRatio,
-  } = useComputedBot(botId);
+  const bot = useComputedBot(botId);
   const updateWatts = () => {
     const bot = getBotStore().getComputedBot(botId);
     const watts = bot.weaponMotorAmps * bot.$aBatteryVolts;
@@ -63,20 +45,20 @@ export default function WeaponCell({ botId }: Props): ReactElement {
         >
           <SummaryBox
             title={'Energy'}
-            value={$weaponEnergy * weaponFullSendThrottle}
+            value={bot.$weaponEnergy * bot.weaponFullSendThrottle}
             roundPlaces={0}
             units="J"
           />
           <SummaryBox
             title={'Tip Speed'}
-            value={$weaponTipSpeed * weaponFullSendThrottle}
+            value={bot.$weaponTipSpeed * bot.weaponFullSendThrottle}
             roundPlaces={0}
             units="m/s"
           />
-          <SummaryBox title={'RPM'} value={$weaponRpm} roundPlaces={0} />
+          <SummaryBox title={'RPM'} value={bot.$weaponRpm} roundPlaces={0} />
           <SummaryBox
             title={'Current draw'}
-            value={$weaponFullSendAmpHours * 1000}
+            value={bot.$weaponFullSendAmpHours * 1000}
             roundPlaces={0}
             units="mAh"
           />
@@ -95,13 +77,13 @@ export default function WeaponCell({ botId }: Props): ReactElement {
             <ConfigBox title="Weapon" small>
               <LabeledNumberInput
                 title={'MOI'}
-                value={weaponMoi}
+                value={bot.weaponMoi}
                 valueKey="weaponMoi"
                 units={'g•mm'}
               />
               <LabeledNumberInput
                 title={'Weapon OD'}
-                value={weaponOd}
+                value={bot.weaponOd}
                 valueKey="weaponOd"
                 units={'mm'}
               />
@@ -111,14 +93,14 @@ export default function WeaponCell({ botId }: Props): ReactElement {
             <ConfigBox title="Motor" small>
               <LabeledNumberInput
                 title={'Motor Kv'}
-                value={weaponMotorKv}
+                value={bot.weaponMotorKv}
                 valueKey="weaponMotorKv"
                 units={'Kv'}
               />
 
               <LabeledNumberInput
                 title={'Motor Amps'}
-                value={weaponMotorAmps}
+                value={bot.weaponMotorAmps}
                 valueKey="weaponMotorAmps"
                 roundPlaces={0}
                 onBlur={updateWatts}
@@ -126,11 +108,25 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               />
               <LabeledNumberInput
                 title={'Motor Watts'}
-                value={weaponMotorWatts}
+                value={bot.weaponMotorWatts}
                 valueKey="weaponMotorWatts"
                 roundPlaces={0}
                 onBlur={updateAmps}
                 units={'watts'}
+              />
+              <LabeledNumberInput
+                title={'Motor Ri'}
+                value={bot.weaponMotorRiMilliOhm}
+                valueKey="weaponMotorRiMilliOhm"
+                units={'mΩ'}
+                tooltip="Internal resistance of the motor in milliohms. You can find this on most manufacturers websites."
+              />
+              <LabeledReadOnlyInput
+                title={"Stall Torque"}
+                value={bot.$weaponMotorStallTorque}
+                roundPlaces={2}
+                units={"N•m"}
+                tooltip="An approximation of stall torque based on Kv and Ri."
               />
             </ConfigBox>
           </div>
@@ -138,21 +134,21 @@ export default function WeaponCell({ botId }: Props): ReactElement {
             <ConfigBox title="Gearing" small>
               <LabeledNumberInput
                 title={'Driver Gear'}
-                value={weaponGearDriver}
+                value={bot.weaponGearDriver}
                 valueKey="weaponGearDriver"
                 units="teeth"
                 roundPlaces={0}
               />
               <LabeledNumberInput
                 title={'Driven Gear'}
-                value={weaponGearDriven}
+                value={bot.weaponGearDriven}
                 valueKey="weaponGearDriven"
                 units="teeth"
                 roundPlaces={0}
               />
               <LabeledReadOnlyInput
                 title={'Gear Ratio'}
-                value={$weaponGearRatio}
+                value={bot.$weaponGearRatio}
                 roundPlaces={2}
               />
             </ConfigBox>
@@ -165,21 +161,21 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
                 <SummaryBox
                   title={'Energy'}
-                  value={$weaponEnergy * weaponFullSendThrottle}
+                  value={bot.$weaponEnergy * bot.weaponFullSendThrottle}
                   roundPlaces={0}
                   units="J"
                   compact
                 />
                 <SummaryBox
                   title={'Tip Speed'}
-                  value={$weaponTipSpeed * weaponFullSendThrottle}
+                  value={bot.$weaponTipSpeed * bot.weaponFullSendThrottle}
                   roundPlaces={0}
                   units="m/s"
                   compact
                 />
                 <SummaryBox
                   title={'Current'}
-                  value={$weaponFullSendAmpHours * 1000}
+                  value={bot.$weaponFullSendAmpHours * 1000}
                   roundPlaces={0}
                   units="mAh"
                   compact
@@ -187,19 +183,19 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               </div>
               <div>
                 <LabeledRangeInput
-                  title={`Throttle (${round(weaponFullSendThrottle * 100)}%)`}
+                  title={`Throttle (${round(bot.weaponFullSendThrottle * 100)}%)`}
                   min={0}
                   max={1}
                   step={0.05}
-                  value={weaponFullSendThrottle}
+                  value={bot.weaponFullSendThrottle}
                   valueKey={'weaponFullSendThrottle'}
                 />
                 <LabeledRangeInput
-                  title={` Duration (${round(weaponFullSendDuration)} sec)`}
+                  title={` Duration (${round(bot.weaponFullSendDuration)} sec)`}
                   min={0}
                   max={180}
                   step={5}
-                  value={weaponFullSendDuration}
+                  value={bot.weaponFullSendDuration}
                   valueKey={'weaponFullSendDuration'}
                 />
               </div>
@@ -210,21 +206,21 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
                 <SummaryBox
                   title={'Energy'}
-                  value={$weaponEnergy * weaponTypicalThrottle}
+                  value={bot.$weaponEnergy * bot.weaponTypicalThrottle}
                   roundPlaces={0}
                   units="J"
                   compact
                 />
                 <SummaryBox
                   title={'Tip Speed'}
-                  value={$weaponTipSpeed * weaponTypicalThrottle}
+                  value={bot.$weaponTipSpeed * bot.weaponTypicalThrottle}
                   roundPlaces={0}
                   units="m/s"
                   compact
                 />
                 <SummaryBox
                   title={'Current draw'}
-                  value={$weaponTypicalAmpHours * 1000}
+                  value={bot.$weaponTypicalAmpHours * 1000}
                   roundPlaces={0}
                   units="mAh"
                   compact
@@ -232,19 +228,19 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               </div>
               <div>
                 <LabeledRangeInput
-                  title={`Throttle (${round(weaponTypicalThrottle * 100)}%)`}
+                  title={`Throttle (${round(bot.weaponTypicalThrottle * 100)}%)`}
                   min={0}
                   max={1}
                   step={0.05}
-                  value={weaponTypicalThrottle}
+                  value={bot.weaponTypicalThrottle}
                   valueKey={'weaponTypicalThrottle'}
                 />
                 <LabeledRangeInput
-                  title={` Duration (${round(weaponTypicalDuration)} sec)`}
+                  title={`Duration (${round(bot.weaponTypicalDuration)} sec)`}
                   min={0}
                   max={180}
                   step={5}
-                  value={weaponTypicalDuration}
+                  value={bot.weaponTypicalDuration}
                   valueKey={'weaponTypicalDuration'}
                 />
               </div>

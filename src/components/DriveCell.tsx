@@ -14,22 +14,7 @@ interface Props {
   botId: BotId;
 }
 export default function DriveCell({ botId }: Props): ReactElement {
-  const {
-    driveMotorCount,
-    driveMotorKv,
-    driveMotorAmps,
-    driveMotorWatts,
-    driveWheelOD,
-    driveGearboxReduction,
-    driveSecondaryReduction,
-    $driveTopSpeed,
-    driveFullSendDuration,
-    driveFullSendThrottle,
-    driveTypicalDuration,
-    driveTypicalThrottle,
-    $driveFullSendAmpHours,
-    $driveTypicalAmpHours,
-  } = useComputedBot(botId);
+  const  bot = useComputedBot(botId);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -65,18 +50,18 @@ export default function DriveCell({ botId }: Props): ReactElement {
           <ConfigBox title="Motor" small>
             <LabeledNumberInput
               title={'Motor Count'}
-              value={driveMotorCount}
+              value={bot.driveMotorCount}
               valueKey="driveMotorCount"
             />
             <LabeledNumberInput
               title={'Motor Kv'}
-              value={driveMotorKv}
+              value={bot.driveMotorKv}
               valueKey="driveMotorKv"
               units={'Kv'}
             />
             <LabeledNumberInput
               title={'Motor Amps'}
-              value={driveMotorAmps}
+              value={bot.driveMotorAmps}
               valueKey="driveMotorAmps"
               roundPlaces={1}
               onBlur={updateWatts}
@@ -84,35 +69,49 @@ export default function DriveCell({ botId }: Props): ReactElement {
             />
             <LabeledNumberInput
               title={'Motor Watts'}
-              value={driveMotorWatts}
+              value={bot.driveMotorWatts}
               valueKey="driveMotorWatts"
               roundPlaces={1}
               onBlur={updateAmps}
               units={'watts'}
             />
+              <LabeledNumberInput
+                title={'Motor Ri'}
+                value={bot.driveMotorRiMilliOhm}
+                valueKey="driveMotorRiMilliOhm"
+                units={'mΩ'}
+                tooltip="Internal resistance of the motor in milliohms. You can find this on most manufacturers websites."
+            />
+              <LabeledReadOnlyInput
+                title={"Stall Torque"}
+                value={bot.$driveMotorStallTorque}
+                roundPlaces={2}
+                units={"N•m"}
+                tooltip="An approximation of stall torque based on Kv and Ri."
+              />
           </ConfigBox>
         </div>
         <div style={{ flex: 1, paddingLeft: 6, paddingRight: 6 }}>
           <ConfigBox title="Gearing" small>
             <LabeledNumberInput
               title={'Wheel OD'}
-              value={driveWheelOD}
+              value={bot.driveWheelOD}
               valueKey="driveWheelOD"
               units={'mm'}
             />
             <LabeledNumberInput
               title={'Gearbox Reduction'}
-              value={driveGearboxReduction}
+              value={bot.driveGearboxReduction}
               valueKey="driveGearboxReduction"
             />
             <LabeledNumberInput
               title={'Secondary Reduction'}
-              value={driveSecondaryReduction}
+              value={bot.driveSecondaryReduction}
               valueKey="driveSecondaryReduction"
             />
             <LabeledReadOnlyInput
               title="Total Reduction"
-              value={driveGearboxReduction * driveSecondaryReduction}
+              value={bot.driveGearboxReduction * bot.driveSecondaryReduction}
               roundPlaces={2}
             />
           </ConfigBox>
@@ -124,7 +123,7 @@ export default function DriveCell({ botId }: Props): ReactElement {
             <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
               <SummaryBox
                 title="Top Speed"
-                value={$driveTopSpeed * driveFullSendThrottle}
+                value={bot.$driveTopSpeed * bot.driveFullSendThrottle}
                 roundPlaces={2}
                 units={'m/s'}
                 compact
@@ -132,7 +131,7 @@ export default function DriveCell({ botId }: Props): ReactElement {
 
               <SummaryBox
                 title={'Current draw'}
-                value={$driveFullSendAmpHours * 1000}
+                value={bot.$driveFullSendAmpHours * 1000}
                 roundPlaces={0}
                 units="mAh"
                 compact
@@ -140,19 +139,19 @@ export default function DriveCell({ botId }: Props): ReactElement {
             </div>
             <div>
               <LabeledRangeInput
-                title={`Throttle (${round(driveFullSendThrottle * 100)}%)`}
+                title={`Throttle (${round(bot.driveFullSendThrottle * 100)}%)`}
                 min={0}
                 max={1}
                 step={0.05}
-                value={driveFullSendThrottle}
+                value={bot.driveFullSendThrottle}
                 valueKey={'driveFullSendThrottle'}
               />
               <LabeledRangeInput
-                title={` Duration (${round(driveFullSendDuration)} sec)`}
+                title={` Duration (${round(bot.driveFullSendDuration)} sec)`}
                 min={0}
                 max={180}
                 step={5}
-                value={driveFullSendDuration}
+                value={bot.driveFullSendDuration}
                 valueKey={'driveFullSendDuration'}
               />
             </div>
@@ -163,7 +162,7 @@ export default function DriveCell({ botId }: Props): ReactElement {
           <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
               <SummaryBox
                 title="Top Speed"
-                value={$driveTopSpeed * driveTypicalThrottle}
+                value={bot.$driveTopSpeed * bot.driveTypicalThrottle}
                 roundPlaces={2}
                 units={'m/s'}
                 compact
@@ -171,7 +170,7 @@ export default function DriveCell({ botId }: Props): ReactElement {
 
               <SummaryBox
                 title={'Current draw'}
-                value={$driveTypicalAmpHours * 1000}
+                value={bot.$driveTypicalAmpHours * 1000}
                 roundPlaces={0}
                 units="mAh"
                 compact
@@ -179,19 +178,19 @@ export default function DriveCell({ botId }: Props): ReactElement {
             </div>
             <div>
               <LabeledRangeInput
-                title={`Throttle (${round(driveTypicalThrottle * 100)}%)`}
+                title={`Throttle (${round(bot.driveTypicalThrottle * 100)}%)`}
                 min={0}
                 max={1}
                 step={0.05}
-                value={driveTypicalThrottle}
+                value={bot.driveTypicalThrottle}
                 valueKey={'driveTypicalThrottle'}
               />
               <LabeledRangeInput
-                title={`Duration (${round(driveTypicalDuration)} sec)`}
+                title={`Duration (${round(bot.driveTypicalDuration)} sec)`}
                 min={0}
                 max={180}
                 step={5}
-                value={driveTypicalDuration}
+                value={bot.driveTypicalDuration}
                 valueKey={'driveTypicalDuration'}
               />
             </div>

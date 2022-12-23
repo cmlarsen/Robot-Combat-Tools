@@ -31,9 +31,9 @@ interface WeaponSystem {
   weaponMotorKv: number;
   weaponMotorWatts: number;
   weaponMotorAmps: number;
+  weaponMotorRiMilliOhm: number;
   weaponFullSendThrottle: number;
   weaponFullSendDuration: number;
-
   weaponTypicalThrottle: number;
   weaponTypicalDuration: number;
 }
@@ -58,6 +58,7 @@ interface DriveSystem {
   driveMotorKv: number;
   driveMotorAmps: number;
   driveMotorWatts: number;
+  driveMotorRiMilliOhm: number;
   driveGearboxReduction: number;
   driveSecondaryReduction: number;
   driveWheelOD: number;
@@ -69,6 +70,7 @@ interface DriveSystem {
 
 interface ComputedDriveSystem {
   $driveTopSpeed: number;
+  $driveMotorStallTorque: number;
   $driveFullSendAmps: number;
   $driveFullSendWattHours: number;
   $driveFullSendAmpHours: number;
@@ -118,6 +120,7 @@ const blankBot: Bot = {
   weaponMotorKv: 2000,
   weaponMotorWatts: 1,
   weaponMotorAmps: 1,
+  weaponMotorRiMilliOhm:0,
   weaponFullSendThrottle: 1,
   weaponFullSendDuration: 20,
   weaponTypicalThrottle: 0.5,
@@ -126,6 +129,7 @@ const blankBot: Bot = {
   driveMotorKv: 2000,
   driveMotorWatts: 1,
   driveMotorAmps: 1,
+  driveMotorRiMilliOhm:0,
   driveGearboxReduction: 1,
   driveSecondaryReduction: 1,
   driveWheelOD: 40,
@@ -149,7 +153,6 @@ export const useBotStore = create<BotStore>()(
             const $aBatteryVolts = bot.aBatteryCells * VOLTS_PER_CELL;
 
             const computedWeapon: ComputedWeaponSystem = {
-              $weaponMotorStallTorque: -1,
               $weaponSpinUpTime: -1,
               ...calcComputedWeapon(bot, $aBatteryVolts),
             };
@@ -236,6 +239,19 @@ export const setBotStore = useBotStore.setState;
 export const getBotStore = useBotStore.getState;
 export const updateBot = getBotStore().updateBot;
 
+/** Returns Torque in N•m */
+function calcBrushlessTorque(volts:number, kv:number, ri:number) {
+  //  From http://runamok.tech/RunAmok/spincalc_help.html
+
+   // brushless torque estimation volts kv ri -- revs stall
+    const twist = (( 1352 / kv) * (volts / (ri * 0.001))) / ( 141.61 * 1.25 ) ;
+
+    // '* 1.25' is a correction factor for reduced current at low RPM from the brushless motor controller.
+    // The 'SimonK' ESC firmware by default start at 1/4 current up to a few hundred RPM before fully kicking in.
+    return twist ;
+}
+
+
 function calcComputedDrive(bot: Bot, $aBatteryVolts: number) {
   const $driveFullSendAmps =
     bot.driveMotorAmps * bot.driveFullSendThrottle * bot.driveMotorCount;
@@ -252,7 +268,7 @@ function calcComputedDrive(bot: Bot, $aBatteryVolts: number) {
     $driveTypicalAmps * $aBatteryVolts * (bot.driveTypicalDuration / 60 / 60);
 
   const $driveTypicalAmpHours = $driveTypicalWattHours / $aBatteryVolts;
-
+  const $driveMotorStallTorque = calcBrushlessTorque($aBatteryVolts,bot.driveMotorKv, bot.driveMotorRiMilliOhm)
   const $driveTopSpeed =
     (($aBatteryVolts * bot.driveMotorKv) /
       bot.driveGearboxReduction /
@@ -266,6 +282,7 @@ function calcComputedDrive(bot: Bot, $aBatteryVolts: number) {
     $driveTypicalAmps,
     $driveTypicalWattHours,
     $driveTypicalAmpHours,
+    $driveMotorStallTorque
   };
 }
 
@@ -275,9 +292,8 @@ function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
   const $weaponTipSpeed = (bot.weaponOd * Math.PI * ($weaponRpm / 60)) / 1000;
 
   const kgm = bot.weaponMoi * 0.000000001;
-  // const rads = convert($weaponRpm*60,'turns').to('rads')
   const rads = rpmToRads($weaponRpm);
-  const $weaponEnergy = 0.5 * kgm * Math.pow(rads, 2);
+  const $weaponEnergy = calcJoules(kgm, rads);
 
   const $weaponFullSendAmps = bot.weaponMotorAmps * bot.weaponFullSendThrottle;
   const $weaponFullSendWattHours =
@@ -290,6 +306,7 @@ function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
   const $weaponTypicalWattHours =
     $weaponTypicalAmps * $aBatteryVolts * (bot.weaponTypicalDuration / 60 / 60);
   const $weaponTypicalAmpHours = $weaponTypicalWattHours / $aBatteryVolts;
+  const $weaponMotorStallTorque = calcBrushlessTorque($aBatteryVolts,bot.weaponMotorKv, bot.weaponMotorRiMilliOhm)
   return {
     $weaponGearRatio,
     $weaponEnergy,
@@ -301,7 +318,12 @@ function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
     $weaponTypicalAmps,
     $weaponTypicalWattHours,
     $weaponTypicalAmpHours,
+    $weaponMotorStallTorque
   };
+}
+
+function calcJoules(kgm: number, rads: number) {
+  return 0.5 * kgm * Math.pow(rads, 2);
 }
 
 export function rpmToRads(rpm: number) {
