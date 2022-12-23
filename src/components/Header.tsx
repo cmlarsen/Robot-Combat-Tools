@@ -16,7 +16,7 @@ export default function Header({botId}: Props): ReactElement {
         <div>
           <h1>
             Bot
-            {name && (
+            {botId && (
               <>
                 :{' '}
                 <input
@@ -27,7 +27,10 @@ export default function Header({botId}: Props): ReactElement {
                     border: 'none',
                     fontSize: '1em',
                     fontWeight: 700,
-                    textDecoration: 'underline',
+
+                    width: "auto"
+                    , textAlign: 'left',
+                    borderBottom: "1px solid lightgray"
                   }}
                   onChange={(e) => {
                     updateBot({ name: e.target.value.trimStart() });
