@@ -148,98 +148,26 @@ export const useBotStore = create<BotStore>()(
             const bot = get().bots[botId];
             const $aBatteryVolts = bot.aBatteryCells * VOLTS_PER_CELL;
 
-            const $weaponGearRatio =
-              bot.weaponGearDriven / bot.weaponGearDriver;
-            const $weaponRpm =
-              (bot.weaponMotorKv * $aBatteryVolts) / $weaponGearRatio;
-            const $weaponTipSpeed =
-              (bot.weaponOd * Math.PI * ($weaponRpm / 60)) / 1000;
-
-            const kgm = bot.weaponMoi * 0.000000001;
-            // const rads = convert($weaponRpm*60,'turns').to('rads')
-            const rads = rpmToRads($weaponRpm);
-            const $weaponEnergy = 0.5 * kgm * Math.pow(rads, 2);
-
-            const $weaponFullSendAmps =
-              bot.weaponMotorAmps * bot.weaponFullSendThrottle;
-            const $weaponFullSendWattHours =
-              $weaponFullSendAmps *
-              $aBatteryVolts *
-              (bot.weaponFullSendDuration / 60 / 60);
-            const $weaponFullSendAmpHours =
-              $weaponFullSendWattHours / $aBatteryVolts;
-
-            const $weaponTypicalAmps =
-              bot.weaponMotorAmps * bot.weaponTypicalThrottle;
-            const $weaponTypicalWattHours =
-              $weaponTypicalAmps *
-              $aBatteryVolts *
-              (bot.weaponTypicalDuration / 60 / 60);
-            const $weaponTypicalAmpHours =
-              $weaponTypicalWattHours / $aBatteryVolts;
-
             const computedWeapon: ComputedWeaponSystem = {
-              $weaponGearRatio,
-              $weaponEnergy,
               $weaponMotorStallTorque: -1,
-              $weaponRpm,
-              $weaponTipSpeed,
               $weaponSpinUpTime: -1,
-              $weaponFullSendAmps,
-              $weaponFullSendWattHours,
-              $weaponFullSendAmpHours,
-              $weaponTypicalAmps,
-              $weaponTypicalWattHours,
-              $weaponTypicalAmpHours,
+              ...calcComputedWeapon(bot, $aBatteryVolts),
             };
-
-            const $driveFullSendAmps =
-              (bot.driveMotorAmps * bot.driveFullSendThrottle)*bot.driveMotorCount;
-
-            const $driveFullSendWattHours =
-              ($driveFullSendAmps *
-              $aBatteryVolts *
-              (bot.driveFullSendDuration / 60 / 60));
-
-            const $driveFullSendAmpHours =
-              ($driveFullSendWattHours / $aBatteryVolts);
-
-            const $driveTypicalAmps =
-              (bot.driveMotorAmps * bot.driveTypicalThrottle)*bot.driveMotorCount;
-
-            const $driveTypicalWattHours =
-             ( $driveTypicalAmps *
-              $aBatteryVolts *
-              (bot.driveTypicalDuration / 60 / 60));
-
-            const $driveTypicalAmpHours =
-              ($driveTypicalWattHours / $aBatteryVolts);
-
-            const $driveTopSpeed =
-              (($aBatteryVolts * bot.driveMotorKv) /
-                bot.driveGearboxReduction /
-                bot.driveSecondaryReduction) *
-              ((bot.driveWheelOD/1000 * Math.PI) / 60);
 
             const computedDrive: ComputedDriveSystem = {
-              $driveTopSpeed,
-              $driveFullSendAmps,
-              $driveFullSendWattHours,
-              $driveFullSendAmpHours,
-              $driveTypicalAmps,
-              $driveTypicalWattHours,
-              $driveTypicalAmpHours,
+              ...calcComputedDrive(bot, $aBatteryVolts),
             };
 
-            const $aBatteryEstimatedCapacity =
-              $weaponFullSendAmpHours +
-              $weaponTypicalAmpHours +
-              ($driveFullSendAmpHours + $driveTypicalAmpHours) ;
+            const $aBatteryEstimatedAmpHours =
+              computedWeapon.$weaponFullSendAmpHours +
+              computedWeapon.$weaponTypicalAmpHours +
+              (computedDrive.$driveFullSendAmpHours +
+                computedDrive.$driveTypicalAmpHours);
 
             return {
               ...bot,
               $aBatteryVolts,
-              $aBatteryEstimatedAmpHours: $aBatteryEstimatedCapacity,
+              $aBatteryEstimatedAmpHours,
               ...computedDrive,
               ...computedWeapon,
             };
@@ -307,6 +235,74 @@ export const useBotStore = create<BotStore>()(
 export const setBotStore = useBotStore.setState;
 export const getBotStore = useBotStore.getState;
 export const updateBot = getBotStore().updateBot;
+
+function calcComputedDrive(bot: Bot, $aBatteryVolts: number) {
+  const $driveFullSendAmps =
+    bot.driveMotorAmps * bot.driveFullSendThrottle * bot.driveMotorCount;
+
+  const $driveFullSendWattHours =
+    $driveFullSendAmps * $aBatteryVolts * (bot.driveFullSendDuration / 60 / 60);
+
+  const $driveFullSendAmpHours = $driveFullSendWattHours / $aBatteryVolts;
+
+  const $driveTypicalAmps =
+    bot.driveMotorAmps * bot.driveTypicalThrottle * bot.driveMotorCount;
+
+  const $driveTypicalWattHours =
+    $driveTypicalAmps * $aBatteryVolts * (bot.driveTypicalDuration / 60 / 60);
+
+  const $driveTypicalAmpHours = $driveTypicalWattHours / $aBatteryVolts;
+
+  const $driveTopSpeed =
+    (($aBatteryVolts * bot.driveMotorKv) /
+      bot.driveGearboxReduction /
+      bot.driveSecondaryReduction) *
+    (((bot.driveWheelOD / 1000) * Math.PI) / 60);
+  return {
+    $driveTopSpeed,
+    $driveFullSendAmps,
+    $driveFullSendWattHours,
+    $driveFullSendAmpHours,
+    $driveTypicalAmps,
+    $driveTypicalWattHours,
+    $driveTypicalAmpHours,
+  };
+}
+
+function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
+  const $weaponGearRatio = bot.weaponGearDriven / bot.weaponGearDriver;
+  const $weaponRpm = (bot.weaponMotorKv * $aBatteryVolts) / $weaponGearRatio;
+  const $weaponTipSpeed = (bot.weaponOd * Math.PI * ($weaponRpm / 60)) / 1000;
+
+  const kgm = bot.weaponMoi * 0.000000001;
+  // const rads = convert($weaponRpm*60,'turns').to('rads')
+  const rads = rpmToRads($weaponRpm);
+  const $weaponEnergy = 0.5 * kgm * Math.pow(rads, 2);
+
+  const $weaponFullSendAmps = bot.weaponMotorAmps * bot.weaponFullSendThrottle;
+  const $weaponFullSendWattHours =
+    $weaponFullSendAmps *
+    $aBatteryVolts *
+    (bot.weaponFullSendDuration / 60 / 60);
+  const $weaponFullSendAmpHours = $weaponFullSendWattHours / $aBatteryVolts;
+
+  const $weaponTypicalAmps = bot.weaponMotorAmps * bot.weaponTypicalThrottle;
+  const $weaponTypicalWattHours =
+    $weaponTypicalAmps * $aBatteryVolts * (bot.weaponTypicalDuration / 60 / 60);
+  const $weaponTypicalAmpHours = $weaponTypicalWattHours / $aBatteryVolts;
+  return {
+    $weaponGearRatio,
+    $weaponEnergy,
+    $weaponRpm,
+    $weaponTipSpeed,
+    $weaponFullSendAmps,
+    $weaponFullSendWattHours,
+    $weaponFullSendAmpHours,
+    $weaponTypicalAmps,
+    $weaponTypicalWattHours,
+    $weaponTypicalAmpHours,
+  };
+}
 
 export function rpmToRads(rpm: number) {
   return rpm * 0.10472;
