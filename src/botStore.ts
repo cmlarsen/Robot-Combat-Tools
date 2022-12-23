@@ -194,22 +194,26 @@ export const useBotStore = create<BotStore>()(
             };
 
             const $driveFullSendAmps =
-              bot.driveMotorAmps * bot.driveFullSendThrottle;
+              (bot.driveMotorAmps * bot.driveFullSendThrottle)*bot.driveMotorCount;
+
             const $driveFullSendWattHours =
-              $driveFullSendAmps *
+              ($driveFullSendAmps *
               $aBatteryVolts *
-              (bot.driveFullSendDuration / 60 / 60);
+              (bot.driveFullSendDuration / 60 / 60));
+
             const $driveFullSendAmpHours =
-              $driveFullSendWattHours / $aBatteryVolts;
+              ($driveFullSendWattHours / $aBatteryVolts);
 
             const $driveTypicalAmps =
-              bot.driveMotorAmps * bot.driveTypicalThrottle;
+              (bot.driveMotorAmps * bot.driveTypicalThrottle)*bot.driveMotorCount;
+
             const $driveTypicalWattHours =
-              $driveTypicalAmps *
+             ( $driveTypicalAmps *
               $aBatteryVolts *
-              (bot.driveTypicalDuration / 60 / 60);
+              (bot.driveTypicalDuration / 60 / 60));
+
             const $driveTypicalAmpHours =
-              $driveTypicalWattHours / $aBatteryVolts;
+              ($driveTypicalWattHours / $aBatteryVolts);
 
             const $driveTopSpeed =
               (($aBatteryVolts * bot.driveMotorKv) /
@@ -230,8 +234,7 @@ export const useBotStore = create<BotStore>()(
             const $aBatteryEstimatedCapacity =
               $weaponFullSendAmpHours +
               $weaponTypicalAmpHours +
-              ($driveFullSendAmpHours + $driveTypicalAmpHours) *
-                bot.driveMotorCount;
+              ($driveFullSendAmpHours + $driveTypicalAmpHours) ;
 
             return {
               ...bot,

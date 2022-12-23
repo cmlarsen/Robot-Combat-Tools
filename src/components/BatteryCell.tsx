@@ -1,6 +1,7 @@
 import React, { ReactElement } from 'react';
 import { BotId } from '../botStore';
 import { useComputedBot } from './Bot';
+import { ConfigBox } from './ConfigBox';
 import { LabeledNumberInput, LabeledReadOnlyInput } from './Inputs';
 
 interface Props {
@@ -10,9 +11,8 @@ interface Props {
 export default function BatteryCell({botId}: Props): ReactElement {
   const bot = useComputedBot(botId);
   return (
-    <div>
-      <h3>Battery</h3>
-      <section>
+      <div style={{width:300}}>
+      <ConfigBox title="Battery">
         <div>
           <LabeledNumberInput
             title="Cells"
@@ -33,7 +33,7 @@ export default function BatteryCell({botId}: Props): ReactElement {
             units="mAh"
           />
         </div>
-      </section>
-    </div>
+        </ConfigBox>
+        </div>
   );
 }

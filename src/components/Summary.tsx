@@ -1,19 +1,37 @@
+import { round } from 'lodash';
 import React from 'react';
 import { BotId } from '../botStore';
 import { useComputedBot } from './Bot';
+import { ConfigBox } from './ConfigBox';
 import { LabeledReadOnlyInput } from './Inputs';
+import SummaryBox from './SummaryBox';
 
-export const Summary: React.FC<{ botId: BotId }> = ({botId}) => {
+export const Summary: React.FC<{ botId: BotId }> = ({ botId }) => {
   const bot = useComputedBot(botId);
   return (
-    <div>
-      <h3>Summary</h3>
-      <section>
-        <LabeledReadOnlyInput title="Weapon Energy" value={bot.$weaponEnergy} roundPlaces={0} units="Joules" />
-        <LabeledReadOnlyInput title="Tip Speed" value={bot.$weaponTipSpeed} roundPlaces={0} units="m/s" />
-        <LabeledReadOnlyInput title="Drive Speed" value={bot.$driveTopSpeed} roundPlaces={2} units="m/s" />
-        <LabeledReadOnlyInput title="Current Draw" value={bot.$aBatteryEstimatedAmpHours * 1000} roundPlaces={0} units="mAh" />
-      </section>
-    </div>
+    <ConfigBox title="Summary">
+      <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+        <SummaryBox
+          title="Weapon Energy"
+          value={round(bot.$weaponEnergy)}
+          units={'J'}
+        />
+        <SummaryBox
+          title="Tip Speed"
+          value={round(bot.$weaponTipSpeed)}
+          units={'m/s'}
+        />
+        <SummaryBox
+          title="Drive Top Speed"
+          value={round(bot.$driveTopSpeed,1)}
+          units={'m/s'}
+        />
+        <SummaryBox
+          title="Est. Current Draw"
+          value={round(bot.$aBatteryEstimatedAmpHours * 1000)}
+          units={'mAh'}
+        />
+      </div>
+    </ConfigBox>
   );
 };

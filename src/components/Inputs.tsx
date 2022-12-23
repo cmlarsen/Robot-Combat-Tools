@@ -32,8 +32,9 @@ export const LabeledNumberInput: React.FC<{
     updateBot({ [key]: v });
   };
   return (
-    <div>
+    <div className="inputCell">
       <span className="label">{title}</span>
+      <div>
       <ControlledNumberInput
         initialValue={round(value, roundPlaces ?? Infinity)}
         onBlur={(v) => {
@@ -41,7 +42,7 @@ export const LabeledNumberInput: React.FC<{
           onBlur?.(v);
         }}
       />
-      {units && <span className="inputUnits">{units}</span>}
+      {units && <span className="inputUnits">{units}</span>}</div>
     </div>
   );
 };
@@ -52,14 +53,16 @@ export const LabeledReadOnlyInput: React.FC<{
   units?: string;
 }> = ({ title, value, units, roundPlaces }) => {
   return (
-    <div>
+    <div className="inputCell readOnly">
+
       <span className="label">{title}</span>
+      <div>
       <input
         type="text"
         value={round(value, roundPlaces ?? Infinity)}
         readOnly
       />
-      {units && <span className="inputUnits">{units}</span>}
+      {units && <span className="inputUnits">{units}</span>}</div>
     </div>
   );
 };
@@ -78,7 +81,8 @@ export const LabeledRangeInput: React.FC<{
     updateBot({ [key]: parseFloat(e.target.value) });
   };
   return (
-    <div>
+    <div className="inputCell">
+
       <span className="label">{title}</span>
       <input
         type="range"
