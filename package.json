@@ -1,8 +1,8 @@
 {
-  "name": "react-typescript",
+  "name": "kill-more-robots-combat-robot-tools",
   "version": "1.0.0",
   "type": "module",
-  "description": "React TypeScript on Replit, using Vite bundler",
+  "description": "Tools for calculating combat robot performance characteristics.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

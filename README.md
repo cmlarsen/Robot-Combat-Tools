@@ -1,13 +1,12 @@
-## Running React on Repl.it
 
-[React](https://reactjs.org/) is a popular JavaScript library for building user interfaces.
+# Kill More Robots
+## Combat robot tools
+Tools for calculating combat robot performance characteristics.
 
-[Vite](https://vitejs.dev/) is a blazing fast frontend build tool that includes features like Hot Module Reloading (HMR), optimized builds, and TypeScript support out of the box.
-
-Using the two in conjunction is one of the fastest ways to build a web app.
+[Demo](https://Kill-More-Robots-Robot-Combat-Calculator.cmlarsen.repl.co)
 
 ### Getting Started
-- Hit run
-- Edit [App.tsx](#src/App.tsx) and watch it live update!
+To run locally (for dev)
+- `npm install`
+- `vite`
 
-By default, Replit runs the `dev` script, but you can configure it by changing the `run` field in the [configuration file](#.replit). Here are the vite docs for [serving production websites](https://vitejs.dev/guide/build.html)
