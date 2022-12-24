@@ -1,12 +1,13 @@
 import { round } from 'lodash';
 import React, { ReactElement } from 'react';
-import { Bot, BotId, getBotStore, updateBot } from '../botStore';
+import { BotId } from '../store';
+import { getBotStore, updateBot } from '../store/botStore';
 import { useComputedBot } from './Bot';
 import { ConfigBox } from './ConfigBox';
 import {
   LabeledNumberInput,
   LabeledRangeInput,
-  LabeledReadOnlyInput,
+  LabeledReadOnlyInput
 } from './Inputs';
 import SummaryBox from './SummaryBox';
 
@@ -14,14 +15,9 @@ interface Props {
   botId: BotId;
 }
 export default function DriveCell({ botId }: Props): ReactElement {
-  const  bot = useComputedBot(botId);
+  const bot = useComputedBot(botId);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    key: keyof Bot
-  ) => {
-    updateBot({ [key]: e.target.valueAsNumber });
-  };
+
 
   const updateWatts = (value: number) => {
     const bot = getBotStore().getComputedBot(botId);
@@ -75,20 +71,20 @@ export default function DriveCell({ botId }: Props): ReactElement {
               onBlur={updateAmps}
               units={'watts'}
             />
-              <LabeledNumberInput
-                title={'Motor Ri'}
-                value={bot.driveMotorRiMilliOhm}
-                valueKey="driveMotorRiMilliOhm"
-                units={'mΩ'}
-                tooltip="Internal resistance of the motor in milliohms. You can find this on most manufacturers websites."
+            <LabeledNumberInput
+              title={'Motor Ri'}
+              value={bot.driveMotorRiMilliOhm}
+              valueKey="driveMotorRiMilliOhm"
+              units={'mΩ'}
+              tooltip="Internal resistance of the motor in milliohms. You can find this on most manufacturers websites."
             />
-              <LabeledReadOnlyInput
-                title={"Stall Torque"}
-                value={bot.$driveMotorStallTorque}
-                roundPlaces={2}
-                units={"N•m"}
-                tooltip="An approximation of stall torque based on Kv and Ri."
-              />
+            <LabeledReadOnlyInput
+              title={'Stall Torque'}
+              value={bot.$driveMotorStallTorque}
+              roundPlaces={2}
+              units={'N•m'}
+              tooltip="An approximation of stall torque based on Kv and Ri."
+            />
           </ConfigBox>
         </div>
         <div style={{ flex: 1, paddingLeft: 6, paddingRight: 6 }}>
@@ -159,7 +155,7 @@ export default function DriveCell({ botId }: Props): ReactElement {
         </div>
         <div style={{ flex: 1, paddingLeft: 6, paddingRight: 6 }}>
           <ConfigBox title="Normal Throttle" small>
-          <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
               <SummaryBox
                 title="Top Speed"
                 value={bot.$driveTopSpeed * bot.driveTypicalThrottle}

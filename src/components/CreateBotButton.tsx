@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { getBotStore } from '../botStore';
+import { getBotStore } from '../store/botStore';
 
 interface Props {}
 

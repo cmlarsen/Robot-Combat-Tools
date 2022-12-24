@@ -1,15 +1,16 @@
-import './Cell.css';
 import { round } from 'lodash';
 import React, { ReactElement } from 'react';
-import { Bot, BotId, getBotStore, updateBot } from '../botStore';
+import { BotId } from '../store';
+import { getBotStore, updateBot } from '../store/botStore';
 import { useComputedBot } from './Bot';
+import './Cell.css';
+import { ConfigBox } from './ConfigBox';
 import {
   LabeledNumberInput,
   LabeledRangeInput,
   LabeledReadOnlyInput,
 } from './Inputs';
 import SummaryBox from './SummaryBox';
-import { ConfigBox } from './ConfigBox';
 
 interface Props {
   botId: BotId;
@@ -124,7 +125,6 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                 title={'Motor count'}
                 value={bot.weaponMotorCount}
                 valueKey="weaponMotorCount"
-
               />
               <LabeledNumberInput
                 title={'Motor Kv'}
@@ -137,7 +137,9 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                 value={bot.weaponMotorPoles}
                 valueKey="weaponMotorPoles"
                 units={'poles'}
-                tooltip={"This can be found on the manufacturer's website. 14 is common for out runners"}
+                tooltip={
+                  "This can be found on the manufacturer's website. 14 is common for out runners"
+                }
               />
 
               <LabeledNumberInput
@@ -164,10 +166,10 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                 tooltip="Internal resistance of the motor in milliohms. You can find this on most manufacturers websites."
               />
               <LabeledReadOnlyInput
-                title={"Stall Torque"}
+                title={'Stall Torque'}
                 value={bot.$weaponMotorStallTorque}
                 roundPlaces={2}
-                units={"N•m"}
+                units={'N•m'}
                 tooltip="An approximation of stall torque based on Kv and Ri."
               />
             </ConfigBox>
@@ -232,7 +234,9 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               </div>
               <div>
                 <LabeledRangeInput
-                  title={`Throttle (${round(bot.weaponFullSendThrottle * 100)}%)`}
+                  title={`Throttle (${round(
+                    bot.weaponFullSendThrottle * 100
+                  )}%)`}
                   min={0}
                   max={1}
                   step={0.05}
@@ -284,7 +288,9 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               </div>
               <div>
                 <LabeledRangeInput
-                  title={`Throttle (${round(bot.weaponTypicalThrottle * 100)}%)`}
+                  title={`Throttle (${round(
+                    bot.weaponTypicalThrottle * 100
+                  )}%)`}
                   min={0}
                   max={1}
                   step={0.05}

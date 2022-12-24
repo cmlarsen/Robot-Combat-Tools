@@ -1,5 +1,5 @@
 import './App.css';
-import { getBotStore, useBotStore } from './botStore';
+import { getBotStore, useBotStore } from './store/botStore';
 import Bot from './components/Bot';
 import Header from './components/Header';
 

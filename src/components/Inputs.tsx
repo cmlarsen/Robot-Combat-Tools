@@ -1,6 +1,7 @@
 import { round } from 'lodash';
 import React, { useEffect, useState } from 'react';
-import { Bot, updateBot } from '../botStore';
+import { Bot } from '../store';
+import { updateBot } from '../store/botStore';
 
 export const ControlledNumberInput: React.FC<{
   onBlur: (v: number) => void;

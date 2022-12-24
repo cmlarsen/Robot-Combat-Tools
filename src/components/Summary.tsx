@@ -1,9 +1,8 @@
 import { round } from 'lodash';
 import React from 'react';
-import { BotId } from '../botStore';
+import { BotId } from '../store';
 import { useComputedBot } from './Bot';
 import { ConfigBox } from './ConfigBox';
-import { LabeledReadOnlyInput } from './Inputs';
 import SummaryBox from './SummaryBox';
 
 export const Summary: React.FC<{ botId: BotId }> = ({ botId }) => {

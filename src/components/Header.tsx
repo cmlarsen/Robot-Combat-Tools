@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
-import { BotId, getBotStore, updateBot, useBotStore } from '../botStore';
-import { useComputedBot } from './Bot';
+import { BotId } from '../store';
+import { updateBot, useBotStore } from '../store/botStore';
 import { BotList } from './BotList';
 import CreateBotButton from './CreateBotButton';
 

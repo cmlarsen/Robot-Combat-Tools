@@ -1,13 +1,10 @@
 import React, { ReactElement } from 'react';
-import {
-  BotId,
-  calculateSpinupTime, getWeaponAtThrottle, getWeaponAtThrottle2, useBotStore
-} from '../botStore';
+import { BotId } from '../store';
+import {  useBotStore } from '../store/botStore';
 import BatteryCell from './BatteryCell';
 import DriveCell from './DriveCell';
 import { Summary } from './Summary';
 import WeaponCell from './WeaponCell';
-import { Chartlet, LineChart } from '@stevent-team/react-chartlet'
 
 interface Props {
   botId: BotId;
@@ -19,29 +16,6 @@ export const useComputedBot = (botId: BotId) =>
 export default function Bot({ botId }: Props): ReactElement {
   const bot = useComputedBot(botId);
 
-  // const data =  Array.from({ length: 101 }, (_, i) => i * .01).map(t => {
-  //   const {
-  //     rpm,
-  //     joules,
-  //     seconds
-  //   } = getWeaponAtThrottle({
-  //     gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
-  //     kv: bot.weaponMotorKv,
-  //     magnetPoles: bot.weaponMotorPoles,
-  //     maxRPM: bot.$weaponRpm,
-  //     moi: bot.weaponMoi,
-  //     ri: bot.weaponMotorRiMilliOhm,
-  //     throttle: t,
-  //     torque: bot.$weaponMotorStallTorque,
-  //     volts: bot.$aBatteryVolts,
-  //   });
-  //   return { seconds, joules, rpm }
-  // })
-  // const series1 = data.map(d=>[d.seconds,d.joules])
-  // const series2 = data.map(d=>[d.seconds,d.rpm])
-
-
-
 
   return (
     <div>
@@ -50,8 +24,7 @@ export default function Bot({ botId }: Props): ReactElement {
         <LineChart />
       </Chartlet>
       </div> */}
-      {bot &&
-         (
+      {bot && (
         <div>
           <div id="summarySection" className="anchor" />
           <Summary botId={botId} />

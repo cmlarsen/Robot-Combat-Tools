@@ -1,4 +1,4 @@
-import { getBotStore, setBotStore, useBotStore } from '../botStore';
+import { getBotStore, setBotStore, useBotStore } from '../store/botStore';
 
 export const BotList = () => {
   const botList = useBotStore((store) => store.bots);

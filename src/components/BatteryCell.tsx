@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { BotId } from '../botStore';
+import { BotId } from '../store/botStore';
 import { useComputedBot } from './Bot';
 import { ConfigBox } from './ConfigBox';
 import { LabeledNumberInput, LabeledReadOnlyInput } from './Inputs';
