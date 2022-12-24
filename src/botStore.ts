@@ -30,6 +30,7 @@ interface WeaponSystem {
   weaponGearDriven: number;
   weaponOd: number;
   weaponMoi: number;
+  weaponMotorCount: number;
   weaponMotorPoles: number;
   weaponMotorKv: number;
   weaponMotorWatts: number;
@@ -122,6 +123,7 @@ const blankBot: Bot = {
   weaponGearDriven: 1,
   weaponOd: 100,
   weaponMoi: 100000,
+  weaponMotorCount:1,
   weaponMotorPoles: 14,
   weaponMotorKv: 2000,
   weaponMotorWatts: 1,
@@ -304,8 +306,8 @@ function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
   const kgm = convertGmm2ToKgm2(bot.weaponMoi);
   const rads = rpmToRads($weaponRpm);
   // const $weaponEnergy = calcKineticEnergy(kgm, rads);
-  const $weaponFullSendAmps = bot.weaponMotorAmps * bot.weaponFullSendThrottle;
-  const $weaponTypicalAmps = bot.weaponMotorAmps * bot.weaponTypicalThrottle;
+  const $weaponFullSendAmps = bot.weaponMotorAmps * bot.weaponFullSendThrottle * bot.weaponMotorCount;
+  const $weaponTypicalAmps = bot.weaponMotorAmps * bot.weaponTypicalThrottle  * bot.weaponMotorCount;
 
   const $weaponMotorStallTorque = calcBrushlessTorque(
     $aBatteryVolts,

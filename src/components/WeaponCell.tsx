@@ -121,6 +121,12 @@ export default function WeaponCell({ botId }: Props): ReactElement {
           <div style={{ flex: 1, paddingLeft: 6, paddingRight: 6 }}>
             <ConfigBox title="Motor" small>
               <LabeledNumberInput
+                title={'Motor count'}
+                value={bot.weaponMotorCount}
+                valueKey="weaponMotorCount"
+
+              />
+              <LabeledNumberInput
                 title={'Motor Kv'}
                 value={bot.weaponMotorKv}
                 valueKey="weaponMotorKv"
@@ -131,7 +137,7 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                 value={bot.weaponMotorPoles}
                 valueKey="weaponMotorPoles"
                 units={'poles'}
-                tooltip={"This can be found on the manufaturers website. 14 is common for out runners"}
+                tooltip={"This can be found on the manufacturer's website. 14 is common for out runners"}
               />
 
               <LabeledNumberInput
