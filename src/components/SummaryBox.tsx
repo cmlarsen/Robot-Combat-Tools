@@ -25,8 +25,8 @@ const useStyles = createUseStyles({
   compact: {
     height: 20,
     padding: '0.3em',
-    paddingLeft: '0.4em',
-    paddingRight: '0.4em',
+    paddingLeft: '0.2em',
+    paddingRight: '0.2em',
     minWidth: 'auto',
     flexDirection: 'row-reverse',
     alignItems: 'center',

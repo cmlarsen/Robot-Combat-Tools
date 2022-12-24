@@ -1,12 +1,13 @@
 import React, { ReactElement } from 'react';
 import {
   BotId,
-  calculateSpinupTime, getWeaponAtThrottle, useBotStore
+  calculateSpinupTime, getWeaponAtThrottle, getWeaponAtThrottle2, useBotStore
 } from '../botStore';
 import BatteryCell from './BatteryCell';
 import DriveCell from './DriveCell';
 import { Summary } from './Summary';
 import WeaponCell from './WeaponCell';
+import { Chartlet, LineChart } from '@stevent-team/react-chartlet'
 
 interface Props {
   botId: BotId;
@@ -17,65 +18,40 @@ export const useComputedBot = (botId: BotId) =>
 
 export default function Bot({ botId }: Props): ReactElement {
   const bot = useComputedBot(botId);
-  const r = calculateSpinupTime({
-    diameter: bot.weaponOd,
-    momentOfInertia: bot.weaponMoi,
-    motorTorque: bot.$weaponMotorStallTorque,
-    rpm: bot.$weaponRpm,
-  });
-  // const r2 = getWeaponAtThrottle(
-  //   0.05,
-  //   bot.weaponMotorKv,
-  //   bot.$weaponGearRatio,
-  //   bot.weaponMoi,
-  //   bot.$weaponMotorStallTorque,
-  //   bot.$aBatteryVolts,
-  //   14,
-  //   bot.$weaponRpm,
-  //   bot.weaponMotorRiMilliOhm
-  // );
-  const r2 = getWeaponAtThrottle(
-    0.05,
-    600,
-    1,
-    0.005211,
-    17.66,
-    22.2,
-    14,
-    13320,
-    20
-  );
 
-  const r3 = getWeaponAtThrottle(
-    0.90,
-    600,
-    1,
-    0.005211,
-    17.66,
-    22.2,
-    14,
-    13320,
-    20
-  );
-  // const r3 = getWeaponAtThrottle(
-  //   0.90,
-  //   600,
-  //   1,
-  //   5210655,
-  //   17.66,
-  //   22.2,
-  //   14,
-  //   13320,
-  //   20
-  // );
-  console.log("5%", r2);
-  console.log("90%", r3);
+  // const data =  Array.from({ length: 101 }, (_, i) => i * .01).map(t => {
+  //   const {
+  //     rpm,
+  //     joules,
+  //     seconds
+  //   } = getWeaponAtThrottle({
+  //     gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
+  //     kv: bot.weaponMotorKv,
+  //     magnetPoles: bot.weaponMotorPoles,
+  //     maxRPM: bot.$weaponRpm,
+  //     moi: bot.weaponMoi,
+  //     ri: bot.weaponMotorRiMilliOhm,
+  //     throttle: t,
+  //     torque: bot.$weaponMotorStallTorque,
+  //     volts: bot.$aBatteryVolts,
+  //   });
+  //   return { seconds, joules, rpm }
+  // })
+  // const series1 = data.map(d=>[d.seconds,d.joules])
+  // const series2 = data.map(d=>[d.seconds,d.rpm])
+
 
 
 
   return (
     <div>
-      {bot && (
+      {/* <div style={{width:100, height:100}}>
+      <Chartlet series={[series1,series2]} height={100}>
+        <LineChart />
+      </Chartlet>
+      </div> */}
+      {bot &&
+         (
         <div>
           <div id="summarySection" className="anchor" />
           <Summary botId={botId} />

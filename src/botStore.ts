@@ -1,6 +1,7 @@
 import create from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 import {
+  clamp,
   DebounceSettings,
   filter,
   omit,
@@ -9,7 +10,7 @@ import {
   unescape,
 } from 'lodash';
 import { nanoid } from 'nanoid';
-import produce from 'immer';
+import produce, { nothing } from 'immer';
 import name from 'project-name-generator';
 import convert from 'convert';
 export const VOLTS_PER_CELL = 3.7;
@@ -29,6 +30,7 @@ interface WeaponSystem {
   weaponGearDriven: number;
   weaponOd: number;
   weaponMoi: number;
+  weaponMotorPoles: number;
   weaponMotorKv: number;
   weaponMotorWatts: number;
   weaponMotorAmps: number;
@@ -42,16 +44,18 @@ interface WeaponSystem {
 interface ComputedWeaponSystem {
   $weaponEnergy: number;
   $weaponRpm: number;
-  $weaponSpinUpTime: number;
   $weaponMotorStallTorque: number;
+  $weaponSpinUpTime:number,
   $weaponTipSpeed: number;
   $weaponGearRatio: number;
   $weaponFullSendAmps: number;
   $weaponFullSendWattHours: number;
   $weaponFullSendAmpHours: number;
+  $weaponFullSendSpinUpTime: number;
   $weaponTypicalAmps: number;
   $weaponTypicalWattHours: number;
   $weaponTypicalAmpHours: number;
+  $weaponTypicalSpinUpTime: number;
 }
 
 interface DriveSystem {
@@ -118,10 +122,11 @@ const blankBot: Bot = {
   weaponGearDriven: 1,
   weaponOd: 100,
   weaponMoi: 100000,
+  weaponMotorPoles: 14,
   weaponMotorKv: 2000,
   weaponMotorWatts: 1,
   weaponMotorAmps: 1,
-  weaponMotorRiMilliOhm: 0,
+  weaponMotorRiMilliOhm: 20,
   weaponFullSendThrottle: 1,
   weaponFullSendDuration: 20,
   weaponTypicalThrottle: 0.5,
@@ -154,7 +159,6 @@ export const useBotStore = create<BotStore>()(
             const $aBatteryVolts = bot.aBatteryCells * VOLTS_PER_CELL;
 
             const computedWeapon: ComputedWeaponSystem = {
-              $weaponSpinUpTime: -1,
               ...calcComputedWeapon(bot, $aBatteryVolts),
             };
 
@@ -296,21 +300,12 @@ function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
   const $weaponRpm = (bot.weaponMotorKv * $aBatteryVolts) / $weaponGearRatio;
   const $weaponTipSpeed = (bot.weaponOd * Math.PI * ($weaponRpm / 60)) / 1000;
 
-  const kgm = bot.weaponMoi * 0.000000001;
+  // const kgm = bot.weaponMoi * 0.000000001;
+  const kgm = convertGmm2ToKgm2(bot.weaponMoi);
   const rads = rpmToRads($weaponRpm);
-  const $weaponEnergy = calcKineticEnergy(kgm, rads);
-
+  // const $weaponEnergy = calcKineticEnergy(kgm, rads);
   const $weaponFullSendAmps = bot.weaponMotorAmps * bot.weaponFullSendThrottle;
-  const $weaponFullSendWattHours =
-    $weaponFullSendAmps *
-    $aBatteryVolts *
-    (bot.weaponFullSendDuration / 60 / 60);
-  const $weaponFullSendAmpHours = $weaponFullSendWattHours / $aBatteryVolts;
-
   const $weaponTypicalAmps = bot.weaponMotorAmps * bot.weaponTypicalThrottle;
-  const $weaponTypicalWattHours =
-    $weaponTypicalAmps * $aBatteryVolts * (bot.weaponTypicalDuration / 60 / 60);
-  const $weaponTypicalAmpHours = $weaponTypicalWattHours / $aBatteryVolts;
 
   const $weaponMotorStallTorque = calcBrushlessTorque(
     $aBatteryVolts,
@@ -318,17 +313,77 @@ function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
     bot.weaponMotorRiMilliOhm
   );
 
+  const {
+    // amps: $weaponFullSendAmps, // I don't really understand the battery calcs on the AA spreasheet.
+    joules:$weaponEnergy ,
+    seconds: $weaponSpinUpTime,
+  } = getWeaponAtThrottle({
+    gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
+    kv: bot.weaponMotorKv,
+    magnetPoles: bot.weaponMotorPoles,
+    maxRPM: $weaponRpm,
+    moi: bot.weaponMoi,
+    ri: bot.weaponMotorRiMilliOhm,
+    throttle: 1, //full throttle
+    torque: $weaponMotorStallTorque,
+    volts: $aBatteryVolts,
+  });
+  const {
+
+    seconds: $weaponFullSendSpinUpTime,
+
+  } = getWeaponAtThrottle({
+    gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
+    kv: bot.weaponMotorKv,
+    magnetPoles: bot.weaponMotorPoles,
+    maxRPM: $weaponRpm,
+    moi: bot.weaponMoi,
+    ri: bot.weaponMotorRiMilliOhm,
+    throttle: bot.weaponFullSendThrottle,
+    torque: $weaponMotorStallTorque,
+    volts: $aBatteryVolts,
+  });
+
+
+  const {
+    // amps: $weaponTypicalAmps,
+    seconds: $weaponTypicalSpinUpTime,
+  } = getWeaponAtThrottle({
+    gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
+    kv: bot.weaponMotorKv,
+    magnetPoles: bot.weaponMotorPoles,
+    maxRPM: $weaponRpm,
+    moi: bot.weaponMoi,
+    ri: bot.weaponMotorRiMilliOhm,
+    throttle: bot.weaponTypicalThrottle,
+    torque: $weaponMotorStallTorque,
+    volts: $aBatteryVolts,
+  });
+
+  const $weaponFullSendWattHours =
+    $weaponFullSendAmps *
+    $aBatteryVolts *
+    (bot.weaponFullSendDuration / 60 / 60);
+  const $weaponFullSendAmpHours = $weaponFullSendWattHours / $aBatteryVolts;
+
+  const $weaponTypicalWattHours =
+    $weaponTypicalAmps * $aBatteryVolts * (bot.weaponTypicalDuration / 60 / 60);
+  const $weaponTypicalAmpHours = $weaponTypicalWattHours / $aBatteryVolts;
+
   return {
     $weaponGearRatio,
     $weaponEnergy,
     $weaponRpm,
+    $weaponSpinUpTime,
     $weaponTipSpeed,
     $weaponFullSendAmps,
     $weaponFullSendWattHours,
     $weaponFullSendAmpHours,
+    $weaponFullSendSpinUpTime,
     $weaponTypicalAmps,
     $weaponTypicalWattHours,
     $weaponTypicalAmpHours,
+    $weaponTypicalSpinUpTime,
     $weaponMotorStallTorque,
   };
 }
@@ -361,10 +416,17 @@ interface BrushlessMotorOutputs {
 }
 
 function gmm2ToKgm2(v: number) {
-  return  v / 10000000
+  return v / 10000000;
 }
+function convertGmm2ToKgm2(gmm2: number): number {
+  // Convert g•mm^2 to kg•m^2 by dividing by 1,000,000
+  const kgm = gmm2 * 0.000000001;
+  return kgm;
+  // return gmm2 / 1_000_000;
+}
+
 function kgm2toGmm2(v: number) {
-  return  v * 10000000
+  return v * 10000000;
 }
 
 export function calculateSpinupTime(
@@ -383,12 +445,12 @@ export function calculateSpinupTime(
 
   // calculate kinetic energy in Joules
   const kineticEnergy = 0.5 * momentOfInertiaKgM2 * Math.pow(speedInRads, 2);
+  const ke = 0.50285 * momentOfInertiaKgM2 * Math.pow(speedInRads, 2); // 0.00285 is a correction factor for funky JavaScript math //caleb: hmmm?
 
   // calculate spin up time in seconds
   // var radians = (gear * speed.value * Math.PI) / 30;
   // var time = (total * radians) / torque3;
 
-  // ke = 0.50285 * total * Math.pow(radians, 2); // 0.00285 is a correction factor for funky JavaScript math //caleb: hmmm?
   const spinUpTime = (momentOfInertiaKgM2 * (rpm / 60)) / motorTorque;
   return { speedInRads, kineticEnergy, spinUpTime };
 }
@@ -418,14 +480,14 @@ const getTimeConstant = (
   const r = ((((L4 * L5) / L8) * 0.105) / F2) * L8 * E28;
   const r2 = ((((volts * kv) / gearRatio) * 0.105) / torque) * gearRatio * moi;
   // return ((volts * kv) / gearRatio / 0.105 / (torque * gearRatio)) * moi;
-  console.log("timeConstant", {
-    kv,
-    gearRatio,
-    moi,
-    torque,
-    volts
-  })
-  return r2
+  // console.log("timeConstant", {
+  //   kv,
+  //   gearRatio,
+  //   moi,
+  //   torque,
+  //   volts
+  // })
+  return r2;
 };
 
 /**Time constant when ESC 'soft start' is active. */
@@ -447,18 +509,29 @@ const getCutOverRpm = (magnets: number, gearRatio: number) => {
   return 60 / (magnets * 3 * (COMMUTATION_MAX / 1000000)) / gearRatio;
 };
 
-export function getWeaponAtThrottle(
-  throttle: number,
-  kv: number,
-  gearRatio: number,
-  moi: number,
-  torque: number,
-  volts: number,
-  /** ESC 'soft start' is based on 'commutation interval' which is based on mechanical RPM and the number of magnet poles. */
-  magnetPoles: number,
-  maxRPM: number,
-  ri: number
-): {
+type WeaponInput = {
+  throttle: number;
+  kv: number;
+  gearRatio: number;
+  moi: number;
+  torque: number;
+  volts: number;
+  magnetPoles: number;
+  maxRPM: number;
+  ri: number;
+};
+
+export function getWeaponAtThrottle({
+  throttle,
+  kv,
+  gearRatio,
+  moi,
+  torque,
+  volts,
+  magnetPoles,
+  maxRPM,
+  ri,
+}: WeaponInput): {
   seconds: number;
   secondsFull: number;
   softSeconds: number;
@@ -466,7 +539,14 @@ export function getWeaponAtThrottle(
   joules: number;
   amps: number;
 } {
-  if (throttle <= 0) {
+  const moiKgm2 = convertGmm2ToKgm2(moi);
+  // Clamp throttle to a range of 0 to 0.9973
+  const clampedThrottle = clamp(throttle, 0, 0.95);
+  // const clampedThrottle = clamp(throttle, 0, 0.9973);
+  // const clampedThrottle = clamp(throttle, 0, 0.99999);
+
+  // Return early if throttle is 0
+  if (clampedThrottle <= 0) {
     return {
       seconds: 0,
       secondsFull: 0,
@@ -477,57 +557,28 @@ export function getWeaponAtThrottle(
     };
   }
 
-  const timeConstant = getTimeConstant(kv, gearRatio, moi, torque, volts);
+  // Calculate time constant, soft start time constant, cut-over RPM, and stall amps
+  const timeConstant = getTimeConstant(kv, gearRatio, moiKgm2, torque, volts);
   const softStartTimeConstant = getSoftStartTimeConstant(timeConstant);
   const cutOverRPM = getCutOverRpm(magnetPoles, gearRatio);
   const stallAmps = getStallAmps(volts, ri);
 
-  // const prevOutput = getWeaponAtThrottle(
-  //   throttle - 1,
-  //   kv,
-  //   gearRatio,
-  //   moi,
-  //   torque,
-  //   volts,
-  //   magnetPoles,
-  //   maxRPM,
-  //   ri
-  // );
-  const prevOutput = {
-    seconds: 0,
-    secondsFull: 0,
-    softSeconds: 0,
-    rpm: 0,
-    joules: 0,
-    amps: 0,
-  };
-  console.log( {timeConstant,softStartTimeConstant, throttle,cutOverRPM, stallAmps},prevOutput);
+  // Calculate secondsFull and softSeconds
+  const secondsFull = -(timeConstant * Math.log(1 - clampedThrottle));
+  const softSeconds = -(softStartTimeConstant * Math.log(1 - clampedThrottle));
 
-  const secondsFull = -(timeConstant * Math.log(1 - throttle)); //  -($B$2*LN(1-F6))
+  // Calculate output RPM and seconds
+  const outputRPM = maxRPM * clampedThrottle;
+  const outputSeconds = outputRPM < cutOverRPM ? softSeconds : secondsFull;
 
-  const prevSecondsFull = prevOutput.secondsFull;
-  const gain = secondsFull - prevSecondsFull; //diff prev secondsFull and this secondsFull  in the spreadsheet
-
-  const softSeconds = -(softStartTimeConstant * Math.log(1 - throttle));
-  const prevSoftSeconds = prevOutput.softSeconds;
-  const gain2 = softSeconds - prevSoftSeconds; // diff prev seconds and this seconds  in the spreadsheet  //D6-D5
-
-  const outputRPM = maxRPM * throttle;
-  const prevOutputRPM = prevOutput.rpm;
-  // TODO: Figure out what to do with the relative values.
-  const prevOutputSeconds = prevOutput.seconds;
-
-  const outputSeconds =
-    prevOutputRPM < cutOverRPM
-      ? prevOutputSeconds + gain2
-      : prevOutputSeconds + gain;
-
-  const outputJoules = 0.5 * moi * Math.pow(outputRPM * 0.105, 2);
+  // Calculate output joules and amps
+  const outputJoules = 0.5 * moiKgm2 * Math.pow(outputRPM * 0.105, 2);
   const outputAmps =
     outputRPM < cutOverRPM
       ? ((1 - throttle) * stallAmps) / (1 / POWER_MAX)
       : (1 - throttle) * stallAmps;
 
+  // Return all calculated values
   return {
     seconds: outputSeconds,
     secondsFull,

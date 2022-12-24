@@ -45,13 +45,21 @@ export default function WeaponCell({ botId }: Props): ReactElement {
         >
           <SummaryBox
             title={'Energy'}
-            value={bot.$weaponEnergy * bot.weaponFullSendThrottle}
+            value={bot.$weaponEnergy}
             roundPlaces={0}
             units="J"
           />
+
+          <SummaryBox
+            title={'Spin Up'}
+            value={bot.$weaponSpinUpTime}
+            roundPlaces={2}
+            units="sec"
+          />
+
           <SummaryBox
             title={'Tip Speed'}
-            value={bot.$weaponTipSpeed * bot.weaponFullSendThrottle}
+            value={bot.$weaponTipSpeed}
             roundPlaces={0}
             units="m/s"
           />
@@ -88,6 +96,27 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                 units={'mm'}
               />
             </ConfigBox>
+            <ConfigBox title="Gearing" small>
+              <LabeledNumberInput
+                title={'Driver Gear'}
+                value={bot.weaponGearDriver}
+                valueKey="weaponGearDriver"
+                units="teeth"
+                roundPlaces={0}
+              />
+              <LabeledNumberInput
+                title={'Driven Gear'}
+                value={bot.weaponGearDriven}
+                valueKey="weaponGearDriven"
+                units="teeth"
+                roundPlaces={0}
+              />
+              <LabeledReadOnlyInput
+                title={'Gear Ratio'}
+                value={bot.$weaponGearRatio}
+                roundPlaces={2}
+              />
+            </ConfigBox>
           </div>
           <div style={{ flex: 1, paddingLeft: 6, paddingRight: 6 }}>
             <ConfigBox title="Motor" small>
@@ -96,6 +125,13 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                 value={bot.weaponMotorKv}
                 valueKey="weaponMotorKv"
                 units={'Kv'}
+              />
+              <LabeledNumberInput
+                title={'Motor Poles'}
+                value={bot.weaponMotorPoles}
+                valueKey="weaponMotorPoles"
+                units={'poles'}
+                tooltip={"This can be found on the manufaturers website. 14 is common for out runners"}
               />
 
               <LabeledNumberInput
@@ -130,7 +166,7 @@ export default function WeaponCell({ botId }: Props): ReactElement {
               />
             </ConfigBox>
           </div>
-          <div style={{ flex: 1, paddingLeft: 6, paddingRight: 6 }}>
+          {/* <div style={{ flex: 1, paddingLeft: 6, paddingRight: 6 }}>
             <ConfigBox title="Gearing" small>
               <LabeledNumberInput
                 title={'Driver Gear'}
@@ -152,7 +188,7 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                 roundPlaces={2}
               />
             </ConfigBox>
-          </div>
+          </div> */}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
@@ -164,6 +200,13 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                   value={bot.$weaponEnergy * bot.weaponFullSendThrottle}
                   roundPlaces={0}
                   units="J"
+                  compact
+                />
+                <SummaryBox
+                  title={'Spin  up'}
+                  value={bot.$weaponFullSendSpinUpTime}
+                  roundPlaces={2}
+                  units="sec"
                   compact
                 />
                 <SummaryBox
@@ -209,6 +252,13 @@ export default function WeaponCell({ botId }: Props): ReactElement {
                   value={bot.$weaponEnergy * bot.weaponTypicalThrottle}
                   roundPlaces={0}
                   units="J"
+                  compact
+                />
+                <SummaryBox
+                  title={'Spin  up'}
+                  value={bot.$weaponTypicalSpinUpTime}
+                  roundPlaces={2}
+                  units="sec"
                   compact
                 />
                 <SummaryBox

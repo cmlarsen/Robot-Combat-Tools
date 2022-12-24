@@ -17,13 +17,19 @@ export const Summary: React.FC<{ botId: BotId }> = ({ botId }) => {
           units={'J'}
         />
         <SummaryBox
+          title={'Spin Up'}
+          value={bot.$weaponSpinUpTime}
+          roundPlaces={2}
+          units="sec"
+        />
+        <SummaryBox
           title="Tip Speed"
           value={round(bot.$weaponTipSpeed)}
           units={'m/s'}
         />
         <SummaryBox
           title="Drive Top Speed"
-          value={round(bot.$driveTopSpeed,1)}
+          value={round(bot.$driveTopSpeed, 1)}
           units={'m/s'}
         />
         <SummaryBox
