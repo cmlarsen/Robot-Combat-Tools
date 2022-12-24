@@ -1,3 +1,127 @@
+
+# Ask Aaron Calcuator
+
+
+  var M9 = 0.000000001 ;
+  var M6 = 0.000001 ;
+
+  function calculate()
+
+  { with (document.forms["f1"])
+
+  {
+   // mass calculations
+
+    var diskmass = Math.PI * diskdense.value * diskthick.value * Math.pow( diskrad.value, 2 ) * M9 ;
+    var barmass = bardense.value * barlength.value * barwidth.value * barthick.value * M9 ;
+    var tubemass = Math.PI * tubedense.value * tubelong.value * (( tubeout.value * tubeout.value )
+     - ( tubein.value * tubein.value )) * M9 ;
+    var known =  Number(inert.value) ;
+    var totmass = diskmass + barmass + tubemass + Number(impmass.value) ;
+      bigmass.value = totmass.toPrecision(3) ; if (known > 0) {bigmass.value = "?"} ;
+
+   // mass moment calculations
+
+    var disk = 0.5 * Math.pow( diskrad.value, 2 ) * diskmass * M6 ;
+    var bar = 1/12 * barmass * ( Math.pow( barlength.value, 2 ) + Math.pow( barwidth.value, 2 )) * M6 ;
+    var tube = 0.5 * tubemass * ( Math.pow( tubeout.value, 2 ) + Math.pow( tubein.value, 2 )) * M6 ;
+    var impact = Math.pow( impradius.value, 2 ) * impmass.value * M6 ;
+    var total = disk + bar + tube + impact + known ;
+      mmi.value = total.toPrecision(3) ;
+
+   // rotational speed calculations
+
+    var gear = 1 / ratio.value ;
+    rpm.value = ( speed.value * gear ).toFixed(0) ; if (total == 0) {rpm.value = 0} ;
+    var radians = ( gear * speed.value * Math.PI ) / 30 ;
+    var real3 = rpm.value * 0.95 ;
+    var real2 = rpm.value * 0.8647 ;
+    var real1 = rpm.value * 0.6325 ;
+      document.getElementById("rev3").innerHTML = (real3 / 1000).toPrecision(3) * 1000 ;
+      document.getElementById("rev2").innerHTML = (real2 / 1000).toPrecision(3) * 1000 ;
+      document.getElementById("rev1").innerHTML = (real1 / 1000).toPrecision(3) * 1000 ;
+
+   // torque calculations
+
+    var torque = Number( tor1.value ) ;
+    var torque3 = torque / gear ;
+
+   // tip speed calculations
+
+    var barrad = Math.sqrt( Math.pow( 0.5 * barlength.value, 2 ) +  Math.pow( 0.5 * barwidth.value, 2 )) ;
+    var tip = Math.max( barrad, diskrad.value, tubeout.value, impradius.value ) * 2 * Math.PI
+     * ( speed.value * gear / 60 ) * 0.001 ;
+      tiprad.value = tip.toPrecision(3) ; if (tip == 0) {tiprad.value = "?"} ;
+
+   // time calculations
+
+    var time = ( total * radians ) / torque3 ; document.getElementById("t1").innerHTML = time.toPrecision(3) ;
+      var time2 = time * 2 ; document.getElementById("t2").innerHTML = time2.toPrecision(3) ;
+      var time3 = time * 3 ; document.getElementById("t3").innerHTML = time3.toPrecision(3) ;
+
+   // energy calculations
+
+    ke = 0.50285 * total * Math.pow( radians, 2 ) ; // 0.00285 is a correction factor for funky JavaScript math
+      KE.value = ke.toFixed(0) ;
+      var trim = 0 ;
+      var ke3 = ke * 0.9025 ; if (ke3 < 100) {var trim = 1 ;}
+	document.getElementById("joule3").innerHTML = ((ke3 / 1000).toPrecision(3) * 1000 ).toFixed(trim) ;
+      var ke2 = ke * 0.7477 ; if (ke2 < 100) {var trim = 1 ;}
+	document.getElementById("joule2").innerHTML = ((ke2 / 1000).toPrecision(3) * 1000 ).toFixed(trim) ;
+      var ke1 = ke * 0.4001 ; if (ke1 < 100) {var trim = 1 ;}
+	document.getElementById("joule1").innerHTML = ((ke1 / 1000).toPrecision(3) * 1000 ).toFixed(trim) ;
+
+   // @ specific time calculations
+
+    var sec_speed = (( 1 - Math.exp(-sec_time.value / time)) * rpm.value ) ;
+    var sec_joules = ( 0.5 * total * Math.pow( sec_speed * 0.105, 2 )) ;
+
+      document.getElementById("test8").innerHTML = sec_speed.toFixed(0) ;
+      document.getElementById("test9").innerHTML = sec_joules.toFixed(0) ;
+
+  }
+}
+
+  function graph()
+
+  { with (document.forms["f1"])
+
+  {
+   document.getElementById("t1").innerHTML = "?" ;
+   document.getElementById("t2").innerHTML = "?" ;
+   document.getElementById("t3").innerHTML = "?" ;
+   document.getElementById("joule1").innerHTML = "?" ;
+   document.getElementById("joule2").innerHTML = "?" ;
+   document.getElementById("joule3").innerHTML = "?" ;
+   document.getElementById("rev3").innerHTML = "?" ;
+   document.getElementById("rev2").innerHTML = "?" ;
+   document.getElementById("rev1").innerHTML = "?" ;
+
+   document.getElementById("test8").innerHTML = "?" ;
+   document.getElementById("test9").innerHTML = "?" ;
+  }
+
+  }
+
+  function getHelp()
+
+  { with (document.forms["f1"])
+
+  {
+   var features;
+   var helpwin;
+   if (helpwin != null) { helpwin.location.reload(); }
+   features =
+   "toolbar=no, top=80, left=65, width=710, height=600, menubar=no, scrollbars=yes, resizable=yes";
+   helpwin=window.open("spincalc_help.html","HelpWin",features);
+  }
+
+  }
+
+
+
+
+
 perhaps can get from here `./calcinclude/data/motor.php?key=`
 URL: https://www.ecalc.ch/calcinclude/data/motor.php?key=91%7C4030-470KV%203Y
 
