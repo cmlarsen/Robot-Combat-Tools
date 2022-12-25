@@ -72,8 +72,8 @@ export function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
     // amps: $weaponFullSendAmps, // I don't really understand the battery calcs on the AA spreasheet.
     joules: $weaponEnergy,
     seconds: $weaponSpinUpTime,
-  } = getWeaponAtThrottle({
-    gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
+  } = getWeaponAtThrottleRecursive({
+    gearRatio: $weaponGearRatio,
     kv: bot.weaponMotorKv,
     magnetPoles: bot.weaponMotorPoles,
     maxRPM: $weaponRpm,
@@ -83,8 +83,9 @@ export function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
     torque: $weaponMotorStallTorque,
     volts: $aBatteryVolts,
   });
-  const { seconds: $weaponFullSendSpinUpTime } = getWeaponAtThrottle({
-    gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
+  const t = performance.now();
+  const { seconds: $weaponFullSendSpinUpTime } = getWeaponAtThrottleRecursive({
+    gearRatio: $weaponGearRatio,
     kv: bot.weaponMotorKv,
     magnetPoles: bot.weaponMotorPoles,
     maxRPM: $weaponRpm,
@@ -98,8 +99,8 @@ export function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
   const {
     // amps: $weaponTypicalAmps,
     seconds: $weaponTypicalSpinUpTime,
-  } = getWeaponAtThrottle({
-    gearRatio: bot.weaponGearDriven / bot.weaponGearDriver,
+  } = getWeaponAtThrottleRecursive({
+    gearRatio: $weaponGearRatio,
     kv: bot.weaponMotorKv,
     magnetPoles: bot.weaponMotorPoles,
     maxRPM: $weaponRpm,
@@ -170,7 +171,8 @@ const _getTimeConstant = (
   torque: number,
   volts: number
 ) => {
-  const r2 = ((((volts * kv) / gearRatio) * 0.105) / torque) * gearRatio * moi;
+  const r2 =
+    ((((volts * kv) / gearRatio) * 0.105) / (torque * gearRatio)) * moi;
 
   return r2;
 };
@@ -209,6 +211,10 @@ type GetWeaponAtThrottleResult = {
   joules: number;
   amps: number;
 };
+/**
+ * This isn't recursive, but might now not actually be working properly
+ * We need some unit tests for these calcs...well all of the calc actually.
+ */
 export function getWeaponAtThrottle({
   throttle,
   kv,
@@ -223,7 +229,8 @@ export function getWeaponAtThrottle({
   const moiKgm2 = convertGmm2ToKgm2(moi);
   // Clamp throttle to a range of 0 to 0.9973
   // It will result in infinity if allowed to go to 1
-  const clampedThrottle = clamp(throttle, 0, 0.95);
+  // const clampedThrottle = clamp(throttle, 0, 0.95);
+  const clampedThrottle = clamp(throttle, 0, 0.9973);
   // Return early if throttle is 0
   if (clampedThrottle <= 0) {
     return {
@@ -258,6 +265,82 @@ export function getWeaponAtThrottle({
       : (1 - throttle) * stallAmps;
 
   // Return all calculated values
+  return {
+    seconds: outputSeconds,
+    secondsFull,
+    softSeconds,
+    rpm: outputRPM,
+    joules: outputJoules,
+    amps: outputAmps,
+  };
+}
+
+export function getWeaponAtThrottleRecursive(
+  input: GetWeaponAtThrottleProps
+): GetWeaponAtThrottleResult {
+  const {
+    throttle,
+    kv,
+    gearRatio,
+    moi: moigmm2,
+    torque,
+    volts,
+    magnetPoles,
+    maxRPM,
+    ri,
+  } = input;
+
+  const moi = convertGmm2ToKgm2(moigmm2);
+  // This thing fails if we are actually at 100% the
+  const clampedThrottle = clamp(throttle, 0, 0.999);
+  if (clampedThrottle <= 0) {
+    return {
+      seconds: 0,
+      secondsFull: 0,
+      softSeconds: 0,
+      rpm: 0,
+      joules: 0,
+      amps: 0,
+    };
+  }
+
+  const timeConstant = _getTimeConstant(kv, gearRatio, moi, torque, volts);
+  const softStartTimeConstant = _getSoftStartTimeConstant(timeConstant);
+  const cutOverRPM = _getCutOverRpm(magnetPoles, gearRatio);
+  const stallAmps = _getStallAmps(volts, ri);
+
+  // Recursively call so we can calculate the gain values
+  const prevOutput = getWeaponAtThrottleRecursive({
+    ...input,
+    moi: moigmm2,
+    throttle: input.throttle - 0.05,
+  });
+
+  const secondsFull = -(timeConstant * Math.log(1 - clampedThrottle)); //  -($B$2*LN(1-F6))
+
+  const prevSecondsFull = prevOutput.secondsFull;
+  const gain = secondsFull - prevSecondsFull; //diff prev secondsFull and this secondsFull  in the spreadsheet
+
+  const softSeconds = -(softStartTimeConstant * Math.log(1 - clampedThrottle));
+  const prevSoftSeconds = prevOutput.softSeconds;
+  const gain2 = softSeconds - prevSoftSeconds; // diff prev seconds and this seconds  in the spreadsheet  //D6-D5
+
+  const outputRPM = maxRPM * clampedThrottle;
+  const prevOutputRPM = prevOutput.rpm;
+
+  const prevOutputSeconds = prevOutput.seconds;
+
+  const outputSeconds =
+    prevOutputRPM < cutOverRPM
+      ? prevOutputSeconds + gain2
+      : prevOutputSeconds + gain;
+
+  const outputJoules = 0.5 * moi * Math.pow(outputRPM * 0.105, 2);
+  const outputAmps =
+    outputRPM < cutOverRPM
+      ? ((1 - throttle) * stallAmps) / (1 / POWER_MAX)
+      : (1 - throttle) * stallAmps;
+
   return {
     seconds: outputSeconds,
     secondsFull,

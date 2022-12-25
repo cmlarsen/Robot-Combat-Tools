@@ -2,12 +2,7 @@ import { nanoid } from 'nanoid';
 import name from 'project-name-generator';
 import create from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
-import {
-  Bot,
-  BotStore,
-  ComputedDriveSystem,
-  ComputedWeaponSystem
-} from '.';
+import { Bot, BotStore, ComputedDriveSystem, ComputedWeaponSystem } from '.';
 import { calcComputedDrive, calcComputedWeapon } from './utils';
 export const VOLTS_PER_CELL = 3.7;
 
