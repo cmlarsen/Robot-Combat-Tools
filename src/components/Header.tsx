@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 import { BotId } from '../store';
-import { updateBot, useBotStore } from '../store/botStore';
+import { getBotStore, updateBot, useBotStore } from '../store/botStore';
 import { BotList } from './BotList';
 import CreateBotButton from './CreateBotButton';
 
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export default function Header({ botId }: Props): ReactElement {
+
   const name = useBotStore((store) =>
     botId ? store.getComputedBot(botId).name : ''
   );
@@ -50,6 +51,9 @@ export default function Header({ botId }: Props): ReactElement {
       <div>
         <BotList />
         <CreateBotButton />
+        <button onClick={() => {
+          getBotStore().duplicateBot(getBotStore().selectedBotId)
+        }}>Duplicate</button>
       </div>
     </header>
   );

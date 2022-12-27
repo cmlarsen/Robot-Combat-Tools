@@ -1,15 +1,21 @@
+import Qty from 'js-quantities';
 import { nanoid } from 'nanoid';
 import name from 'project-name-generator';
 import create from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
-import { Bot, BotStore, ComputedDriveSystem, ComputedWeaponSystem } from '.';
-import { calcComputedDrive, calcComputedWeapon } from './utils';
+import { Bot, BotStore, ComputedDriveSystem, ComputedGyroValues, ComputedWeaponSystem } from '.';
+import { calcComputedGyroValues } from './calcComputedGyroValues';
+import { c, convertGmm2ToKgm2 } from './convertUnits';
+import { calcComputedDrive as calcComputedDriveValues, calcComputedWeapon as calcComputedWeaponValues } from './utils';
 export const VOLTS_PER_CELL = 3.7;
 
 const blankBot: Bot = {
+
   id: 'id',
   name: 'name',
   aBatteryCells: 3,
+  wheelBaseWidth: 0,
+  botMass:0,
   weaponGearDriver: 1,
   weaponGearDriven: 1,
   weaponOd: 100,
@@ -52,26 +58,35 @@ export const useBotStore = create<BotStore>()(
             const bot = get().bots[botId];
             const $aBatteryVolts = bot.aBatteryCells * VOLTS_PER_CELL;
 
-            const computedWeapon: ComputedWeaponSystem = {
-              ...calcComputedWeapon(bot, $aBatteryVolts),
-            };
 
-            const computedDrive: ComputedDriveSystem = {
-              ...calcComputedDrive(bot, $aBatteryVolts),
-            };
+            const computedWeaponValues: ComputedWeaponSystem = calcComputedWeaponValues(bot, $aBatteryVolts)
+
+            const computedDriveValues: ComputedDriveSystem = calcComputedDriveValues(bot, $aBatteryVolts)
+
 
             const $aBatteryEstimatedAmpHours =
-              computedWeapon.$weaponFullSendAmpHours +
-              computedWeapon.$weaponTypicalAmpHours +
-              (computedDrive.$driveFullSendAmpHours +
-                computedDrive.$driveTypicalAmpHours);
+              computedWeaponValues.$weaponFullSendAmpHours +
+              computedWeaponValues.$weaponTypicalAmpHours +
+              (computedDriveValues.$driveFullSendAmpHours +
+                computedDriveValues.$driveTypicalAmpHours);
+
+            const computedGyroValues: ComputedGyroValues = calcComputedGyroValues({
+              // botMassKg: Qty(bot.botMass, 'g').to('kg').scalar,
+              botMassKg:c(bot.botMass??1,'g','kg'),
+              driveRPM: computedDriveValues.$driveOutputRPM,
+              weaponMOI: convertGmm2ToKgm2(bot.weaponMoi),
+              weaponRPM: computedWeaponValues.$weaponRpm,
+            wheelOdMeter: c(bot.driveWheelOD??1,'mm','m'),
+              widthMeter: c(bot.wheelBaseWidth??1, 'mm','m')
+            });
 
             return {
               ...bot,
               $aBatteryVolts,
               $aBatteryEstimatedAmpHours,
-              ...computedDrive,
-              ...computedWeapon,
+              ...computedDriveValues,
+              ...computedWeaponValues,
+              ...computedGyroValues
             };
           },
           createBot: () => {
@@ -88,6 +103,21 @@ export const useBotStore = create<BotStore>()(
             const bots = { ...get().bots };
             delete bots[botId];
             set({ bots });
+          },
+          duplicateBot: botId => {
+            const orgBot = get().bots[botId]
+            if (!orgBot) {
+              throw new Error('Duplicate Failed, bot Id  not found');
+            }
+
+            const id = nanoid();
+            const bot = {
+              ...orgBot,
+              id,
+              name: orgBot.name+" Copy",
+            };
+            set((store) => ({ bots: { ...store.bots, [id]: bot } }));
+            return id;
           },
           updateBot: (update) => {
             const botId = get().selectedBotId;

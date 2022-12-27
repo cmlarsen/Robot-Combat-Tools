@@ -1,5 +1,7 @@
+import Qty from 'js-quantities';
 import { clamp } from 'lodash';
-import { Bot } from '.';
+import { Bot, ComputedDriveSystem, ComputedWeaponSystem } from '.';
+import { convertGmm2ToKgm2 } from './convertUnits';
 
 /** Returns Torque in N•m */
 export function calcBrushlessTorque(volts: number, kv: number, ri: number) {
@@ -14,7 +16,11 @@ export function calcBrushlessTorque(volts: number, kv: number, ri: number) {
   return torque;
 }
 
-export function calcComputedDrive(bot: Bot, $aBatteryVolts: number) {
+export function calcComputedDrive(
+  bot: Bot,
+  $aBatteryVolts: number
+): ComputedDriveSystem {
+  const wheelOdMeter = Qty(bot.driveWheelOD, 'mm').to('m').scalar;
   const $driveFullSendAmps =
     bot.driveMotorAmps * bot.driveFullSendThrottle * bot.driveMotorCount;
 
@@ -39,7 +45,15 @@ export function calcComputedDrive(bot: Bot, $aBatteryVolts: number) {
     (($aBatteryVolts * bot.driveMotorKv) /
       bot.driveGearboxReduction /
       bot.driveSecondaryReduction) *
-    (((bot.driveWheelOD / 1000) * Math.PI) / 60);
+    ((wheelOdMeter * Math.PI) / 60);
+
+  const $driveTotalReduction =
+    bot.driveGearboxReduction * bot.driveSecondaryReduction;
+  const $driveOutputRPM =
+    (bot.driveMotorKv * $aBatteryVolts) / $driveTotalReduction;
+  const $driveFullSendSpeed = $driveTopSpeed * bot.driveFullSendThrottle;
+  const $driveTypicalSpeed = $driveTopSpeed * bot.driveTypicalThrottle;
+
   return {
     $driveTopSpeed,
     $driveFullSendAmps,
@@ -49,10 +63,18 @@ export function calcComputedDrive(bot: Bot, $aBatteryVolts: number) {
     $driveTypicalWattHours,
     $driveTypicalAmpHours,
     $driveMotorStallTorque,
+
+    $driveFullSendSpeed,
+    $driveOutputRPM,
+    $driveTotalReduction,
+    $driveTypicalSpeed,
   };
 }
 
-export function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
+export function calcComputedWeapon(
+  bot: Bot,
+  $aBatteryVolts: number
+): ComputedWeaponSystem {
   const $weaponGearRatio = bot.weaponGearDriven / bot.weaponGearDriver;
   const $weaponRpm = (bot.weaponMotorKv * $aBatteryVolts) / $weaponGearRatio;
   const $weaponTipSpeed = (bot.weaponOd * Math.PI * ($weaponRpm / 60)) / 1000;
@@ -137,22 +159,6 @@ export function calcComputedWeapon(bot: Bot, $aBatteryVolts: number) {
     $weaponTypicalSpinUpTime,
     $weaponMotorStallTorque,
   };
-}
-
-export function rpmToRads(rpm: number) {
-  const radPerSec = (rpm * 2 * Math.PI) / 60;
-  return radPerSec;
-}
-export function radsToRPM(radPerSec: number) {
-  const rpm = (radPerSec * 60) / (2 * Math.PI);
-  return rpm;
-}
-
-export function convertGmm2ToKgm2(gmm2: number): number {
-  // Convert g•mm^2 to kg•m^2 by dividing by 1,000,000
-  const kgm = gmm2 * 0.000000001;
-  return kgm;
-  // return gmm2 / 1_000_000;
 }
 
 /**

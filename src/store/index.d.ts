@@ -2,6 +2,23 @@ export type BotId = string;
 
 export type Joules = number;
 
+export interface GeneralBotProperties {
+  wheelBaseWidth: number;
+  botMass: number;
+}
+export interface ComputedGyroValues {
+  /** 'Max Robot Spin Rate' is the quickest the robot can rotate 360 degrees, spinning in place with negligible turning friction. */
+  $maxSpinRate: number;
+  /**
+   * 'Force on Raising Wheel' with no gyro effect would be half the weight of your robot.
+   *  - If the value is positive the robot can spin at full speed without wheel lift.
+   *  - If the value is close to zero one wheel will have very little traction in a high-rate turn.
+   *  - If the value is negative one wheel may lift off the floor in a full-speed spin.
+   */
+  $maxFlatTurnRate: number;
+  /** 'Max Flat Turn Rate' is the quickest the robot is able to rotate 360 degrees without wheel lift. You may restrict the turning rate of your robot by setting a 'Dual Rate', 'ATV', or 'Travel Adjust' on your R/C transmitter. Consult your radio manual for details. */
+  $forceOnRaisingWheel: number;
+}
 export interface BatterySystem {
   aBatteryCells: number;
 }
@@ -61,16 +78,22 @@ export interface DriveSystem {
 
 export interface ComputedDriveSystem {
   $driveTopSpeed: number;
+  $driveTotalReduction: number;
+  $driveOutputRPM: number;
   $driveMotorStallTorque: number;
   $driveFullSendAmps: number;
   $driveFullSendWattHours: number;
   $driveFullSendAmpHours: number;
+  $driveFullSendSpeed: number;
   $driveTypicalAmps: number;
   $driveTypicalWattHours: number;
   $driveTypicalAmpHours: number;
+  $driveTypicalSpeed: number;
+
 }
 
-export type Bot = BatterySystem &
+export type Bot = GeneralBotProperties &
+  BatterySystem &
   WeaponSystem &
   DriveSystem & {
     id: BotId;
@@ -78,6 +101,7 @@ export type Bot = BatterySystem &
   };
 
 export type ComputedBot = Bot &
+  ComputedGyroValues &
   ComputedBatterySystem &
   ComputedWeaponSystem &
   ComputedDriveSystem;
@@ -98,4 +122,5 @@ export interface BotStore {
   updateBot: (update: Partial<Bot>) => void;
   selectBot: (botId: BotId) => void;
   updateSettings: (settings: AppSettings) => void;
+  duplicateBot:(botId:BotId)=>void
 }

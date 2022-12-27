@@ -107,7 +107,12 @@ export default function DriveCell({ botId }: Props): ReactElement {
             />
             <LabeledReadOnlyInput
               title="Total Reduction"
-              value={bot.driveGearboxReduction * bot.driveSecondaryReduction}
+              value={bot.$driveTotalReduction}
+              roundPlaces={2}
+            />
+            <LabeledReadOnlyInput
+              title="Max RPM"
+              value={bot.$driveOutputRPM}
               roundPlaces={2}
             />
           </ConfigBox>
@@ -119,7 +124,7 @@ export default function DriveCell({ botId }: Props): ReactElement {
             <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
               <SummaryBox
                 title="Top Speed"
-                value={bot.$driveTopSpeed * bot.driveFullSendThrottle}
+                value={bot.$driveFullSendSpeed}
                 roundPlaces={2}
                 units={'m/s'}
                 compact
@@ -158,7 +163,7 @@ export default function DriveCell({ botId }: Props): ReactElement {
             <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
               <SummaryBox
                 title="Top Speed"
-                value={bot.$driveTopSpeed * bot.driveTypicalThrottle}
+                value={bot.$driveFullSendSpeed}
                 roundPlaces={2}
                 units={'m/s'}
                 compact
